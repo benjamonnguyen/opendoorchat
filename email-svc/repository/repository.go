@@ -15,7 +15,7 @@ import (
 )
 
 type EmailRepo interface {
-	ThreadSearch(context.Context, model.ThreadSearchTerms) (*model.EmailThread, error)
+	ThreadSearch(context.Context, model.ThreadSearchTerms) (model.EmailThread, error)
 	AddEmail(context.Context, primitive.ObjectID, model.Email) error
 }
 
@@ -24,25 +24,25 @@ type mongoEmailRepo struct {
 }
 
 func NewMongoEmailRepo(cfg config.Config, cl *mongo.Client) *mongoEmailRepo {
-	repo := &mongoEmailRepo{
-		emailThreadsCollection: cl.Database(cfg.Mongo.Database).Collection("emailThreads"),
-	}
-	if repo.emailThreadsCollection == nil {
+	emailThreadsCollection := cl.Database(cfg.Mongo.Database).Collection("emailThreads")
+	if emailThreadsCollection == nil {
 		log.Fatalln("emailThreads collection does not exist")
 	}
 
-	return repo
+	return &mongoEmailRepo{
+		emailThreadsCollection: emailThreadsCollection,
+	}
 }
 
 func (repo *mongoEmailRepo) ThreadSearch(
 	ctx context.Context,
 	st model.ThreadSearchTerms,
-) (*model.EmailThread, error) {
+) (model.EmailThread, error) {
 	var orValues []bson.M
 	if st.ChatId != "" {
 		id, err := primitive.ObjectIDFromHex(st.ChatId)
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, "invalid ChatId")
+			return model.EmailThread{}, status.Error(codes.InvalidArgument, "invalid ChatId")
 		}
 		orValues = append(orValues, bson.M{"chatId": id})
 	}
@@ -54,15 +54,15 @@ func (repo *mongoEmailRepo) ThreadSearch(
 	})
 	if res.Err() != nil {
 		if res.Err() == mongo.ErrNoDocuments {
-			return nil, status.Error(codes.NotFound, res.Err().Error())
+			return model.EmailThread{}, status.Error(codes.NotFound, res.Err().Error())
 		}
-		return nil, status.Error(codes.Internal, res.Err().Error())
+		return model.EmailThread{}, status.Error(codes.Internal, res.Err().Error())
 	}
 	var thread model.EmailThread
 	if err := res.Decode(&thread); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return model.EmailThread{}, status.Error(codes.Internal, err.Error())
 	}
-	return &thread, nil
+	return thread, nil
 }
 
 func (repo *mongoEmailRepo) AddEmail(

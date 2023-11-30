@@ -30,10 +30,10 @@ func main() {
 	// m := mailer.NewMailerSendMailer(cfg.MailerSendApiKey)
 
 	initDbClient(ctx, cfg, shutdownManager)
-	startConsumers(ctx, cfg, shutdownManager)
+	startEmailSvcConsumers(ctx, cfg, shutdownManager)
 	listenAndServeRoutes(ctx, cfg, shutdownManager)
 
-	log.Info().Msgf("started email-svc after %s", time.Since(start))
+	log.Info().Msgf("started after %s", time.Since(start))
 
 	shutdownManager.ShutdownOnInterrupt(20 * time.Second)
 }
@@ -83,7 +83,7 @@ func listenAndServeRoutes(
 	})
 }
 
-func startConsumers(
+func startEmailSvcConsumers(
 	ctx context.Context,
 	cfg config.Config,
 	shutdownManager service.GracefulShutdownManager,

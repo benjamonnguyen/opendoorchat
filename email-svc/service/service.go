@@ -14,7 +14,7 @@ type IEmailService interface {
 	ThreadSearch(
 		ctx context.Context,
 		st model.ThreadSearchTerms,
-	) (*model.EmailThread, error)
+	) (model.EmailThread, error)
 	AddEmail(ctx context.Context, threadId primitive.ObjectID, email model.Email) error
 }
 
@@ -25,14 +25,14 @@ type EmailService struct {
 func (s *EmailService) ThreadSearch(
 	ctx context.Context,
 	st model.ThreadSearchTerms,
-) (*model.EmailThread, error) {
+) (model.EmailThread, error) {
 	if st == (model.ThreadSearchTerms{}) {
-		return nil, status.Error(codes.InvalidArgument, "missing ThreadSearchTerms")
+		return model.EmailThread{}, status.Error(codes.InvalidArgument, "missing ThreadSearchTerms")
 	}
 
 	thread, err := s.EmailRepo.ThreadSearch(ctx, st)
 	if err != nil {
-		return nil, err
+		return model.EmailThread{}, err
 	}
 
 	return thread, err
