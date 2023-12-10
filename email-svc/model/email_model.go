@@ -8,15 +8,16 @@ import (
 )
 
 type Email struct {
-	MessageId string `json:"messageId,omitempty"`
+	MessageId string    `json:"messageId,omitempty" bson:"messageId"`
+	SentAt    time.Time `json:"sentAt,omitempty"    bson:"sentAt"`
 }
 
 type EmailThread struct {
 	Id           primitive.ObjectID `json:"id,omitempty"        bson:"_id"`
-	Participants []usermodel.User   `                           bson:"participants,omitempty"`
-	Emails       []Email            `json:"emails,omitempty"`
-	ChatId       primitive.ObjectID `json:"chatId,omitempty"`
-	CreatedAt    time.Time          `json:"createdAt,omitempty"`
+	Participants []usermodel.User   `                           bson:"participants"`
+	Emails       []Email            `json:"emails,omitempty"    bson:"emails"`
+	ChatId       primitive.ObjectID `json:"chatId,omitempty"    bson:"chatId"`
+	CreatedAt    time.Time          `json:"createdAt,omitempty" bson:"createdAt"`
 }
 
 type ThreadSearchTerms struct {

@@ -39,7 +39,7 @@ func main() {
 	startEmailSvcConsumers(ctx, cfg, shutdownManager, emailService, m)
 	listenAndServeRoutes(ctx, cfg, shutdownManager)
 
-	log.Info().Msgf("started after %s", time.Since(start))
+	log.Info().Msgf("started after %s", time.Since(start).Truncate(time.Second))
 
 	shutdownManager.ShutdownOnInterrupt(20 * time.Second)
 }

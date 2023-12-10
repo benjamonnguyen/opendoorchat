@@ -46,7 +46,7 @@ func forwardEmail(
 	rec *kgo.Record,
 ) {
 	start := time.Now()
-	log.Debug().
+	log.Trace().
 		Str("record", string(rec.Value)).
 		Str("consumer", inboundEmailsConsumer).
 		Msg("got inbound email")
@@ -115,6 +115,7 @@ func forwardEmail(
 		}
 		addCtx, addCanc := context.WithTimeout(ctx, cfg.RequestTimeout)
 		defer addCanc()
+		log.Debug().Str("emailMessageId", email.MessageId).Msg("AddEmail")
 		err = emailSvc.AddEmail(addCtx, thread.Id, email)
 		if err != nil {
 			log.Error().Err(err).Msg("failed AddEmail")

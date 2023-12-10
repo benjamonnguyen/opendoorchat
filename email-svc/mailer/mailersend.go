@@ -3,8 +3,10 @@ package mailer
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"net/mail"
+	"time"
 
 	"github.com/benjamonnguyen/opendoor-chat/commons/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
@@ -76,15 +78,24 @@ func (mailer mailerSendMailer) GetEmail(
 	ctx context.Context,
 	mailerMsgId string,
 ) (model.Email, httputil.HttpError) {
-	root, resp, err := mailer.client.Message.Get(ctx, mailerMsgId)
-	if err != nil {
-		log.Error().Err(err).Str("mailerMsgId", mailerMsgId).Msg("failed Message.Get")
-		return model.Email{}, httputil.HttpErrorFromErr(err)
+	for i := 0; i < 3; i++ {
+		root, resp, err := mailer.client.Message.Get(ctx, mailerMsgId)
+		if err != nil {
+			log.Error().Err(err).Str("mailerMsgId", mailerMsgId).Msg("failed Message.Get")
+			return model.Email{}, httputil.HttpErrorFromErr(err)
+		}
+		if resp.StatusCode != 200 {
+			return model.Email{}, httputil.NewHttpError(resp.StatusCode, resp.Status)
+		}
+		if len(root.Data.Emails) == 0 {
+			backoff := time.Duration(math.Pow(6.0, float64(i))) * time.Second
+			log.Debug().Int("retry", i).Dur("backoff", backoff).Msg("GetEmail: not found")
+			time.Sleep(backoff)
+			continue
+		}
+		return model.Email{
+			MessageId: fmt.Sprintf("<%s@mailersend.net>", root.Data.Emails[0].ID),
+		}, nil
 	}
-	if resp.StatusCode != 200 || len(root.Data.Emails) == 0 {
-		return model.Email{}, httputil.NewHttpError(resp.StatusCode, resp.Status)
-	}
-	return model.Email{
-		MessageId: fmt.Sprintf("<%s@mailersend.net>", root.Data.Emails[0].ID),
-	}, nil
+	return model.Email{}, httputil.NewHttpError(http.StatusNotFound, "")
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/benjamonnguyen/opendoor-chat/commons/config"
 	"github.com/benjamonnguyen/opendoor-chat/commons/httputil"
@@ -76,6 +77,7 @@ func (repo *mongoEmailRepo) AddEmail(
 	threadId primitive.ObjectID,
 	email model.Email,
 ) httputil.HttpError {
+	email.SentAt = time.Now()
 	res := repo.emailThreadsCollection.FindOneAndUpdate(ctx, bson.M{"_id": threadId}, bson.M{
 		"$push": bson.M{
 			"emails": email,
