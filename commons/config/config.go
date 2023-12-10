@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/benjamonnguyen/opendoor-chat-services/commons/db"
-	"github.com/benjamonnguyen/opendoor-chat-services/commons/mq"
+	"github.com/benjamonnguyen/opendoor-chat/commons/db"
+	"github.com/benjamonnguyen/opendoor-chat/commons/mq"
 	"github.com/spf13/viper"
 )
 

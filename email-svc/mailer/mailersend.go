@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"net/mail"
 
-	"github.com/benjamonnguyen/opendoor-chat-services/email-svc/model"
+	"github.com/benjamonnguyen/opendoor-chat/commons/httputil"
+	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
 	"github.com/jhillyerd/enmime"
 	"github.com/mailersend/mailersend-go"
 	"github.com/rs/zerolog/log"
@@ -74,17 +75,16 @@ func (mailer mailerSendMailer) Send(
 func (mailer mailerSendMailer) GetEmail(
 	ctx context.Context,
 	mailerMsgId string,
-) (*model.Email, *http.Response, error) {
+) (model.Email, httputil.HttpError) {
 	root, resp, err := mailer.client.Message.Get(ctx, mailerMsgId)
 	if err != nil {
 		log.Error().Err(err).Str("mailerMsgId", mailerMsgId).Msg("failed Message.Get")
-		return nil, nil, err
+		return model.Email{}, httputil.HttpErrorFromErr(err)
 	}
 	if resp.StatusCode != 200 || len(root.Data.Emails) == 0 {
-		return nil, resp.Response, nil
+		return model.Email{}, httputil.NewHttpError(resp.StatusCode, resp.Status)
 	}
-	email := &model.Email{
+	return model.Email{
 		MessageId: fmt.Sprintf("<%s@mailersend.net>", root.Data.Emails[0].ID),
-	}
-	return email, resp.Response, nil
+	}, nil
 }

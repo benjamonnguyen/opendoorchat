@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/benjamonnguyen/opendoor-chat-services/commons/config"
-	"github.com/benjamonnguyen/opendoor-chat-services/commons/db"
-	"github.com/benjamonnguyen/opendoor-chat-services/commons/mq"
-	"github.com/benjamonnguyen/opendoor-chat-services/commons/service"
+	"github.com/benjamonnguyen/opendoor-chat/commons/config"
+	"github.com/benjamonnguyen/opendoor-chat/commons/db"
+	"github.com/benjamonnguyen/opendoor-chat/commons/mq"
+	"github.com/benjamonnguyen/opendoor-chat/commons/service"
+	"github.com/benjamonnguyen/opendoor-chat/email-svc/consumer"
+	"github.com/benjamonnguyen/opendoor-chat/email-svc/mailer"
+	emailrepo "github.com/benjamonnguyen/opendoor-chat/email-svc/repo"
+	emailservice "github.com/benjamonnguyen/opendoor-chat/email-svc/service"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/mongo"
-)
-
-var (
-	dbClient *mongo.Client
 )
 
 func main() {
@@ -26,11 +26,17 @@ func main() {
 	defer cancel()
 	shutdownManager := service.GracefulShutdownManager{}
 
-	// dependencies
-	// m := mailer.NewMailerSendMailer(cfg.MailerSendApiKey)
+	// repositories
+	dbClient := initDbClient(ctx, cfg, shutdownManager)
+	emailRepo := emailrepo.NewMongoEmailRepo(cfg, dbClient)
 
-	initDbClient(ctx, cfg, shutdownManager)
-	startEmailSvcConsumers(ctx, cfg, shutdownManager)
+	// services
+	emailService := emailservice.NewEmailService(emailRepo)
+
+	// dependencies
+	m := mailer.NewMailerSendMailer(cfg.MailerSendApiKey)
+
+	startEmailSvcConsumers(ctx, cfg, shutdownManager, emailService, m)
 	listenAndServeRoutes(ctx, cfg, shutdownManager)
 
 	log.Info().Msgf("started after %s", time.Since(start))
@@ -54,15 +60,16 @@ func initDbClient(
 	ctx context.Context,
 	cfg config.Config,
 	shutdownManager service.GracefulShutdownManager,
-) {
+) *mongo.Client {
 	connCtx, connCanc := context.WithTimeout(ctx, 10*time.Second)
 	defer connCanc()
-	dbClient = db.ConnectMongoClient(connCtx, cfg.Mongo)
+	dbClient := db.ConnectMongoClient(connCtx, cfg.Mongo)
 	shutdownManager.AddHandler(func() {
 		if err := dbClient.Disconnect(ctx); err != nil {
 			log.Error().Err(err).Msg("failed dbClient.Disconnect")
 		}
 	})
+	return dbClient
 }
 
 func listenAndServeRoutes(
@@ -87,14 +94,17 @@ func startEmailSvcConsumers(
 	ctx context.Context,
 	cfg config.Config,
 	shutdownManager service.GracefulShutdownManager,
+	emailService emailservice.EmailService,
+	m mailer.Mailer,
 ) {
 	consumerCl := mq.NewSplitConsumerClient(
 		ctx,
 		cfg.Kafka,
 		fmt.Sprintf("%s-%s", cfg.Kafka.User, "email-svc"),
 	)
-	go consumerCl.Poll(ctx)
+	consumer.AddInboundEmailsConsumer(ctx, cfg, emailService, m, consumerCl)
 	shutdownManager.AddHandler(func() {
 		consumerCl.Shutdown()
 	})
+	go consumerCl.Poll(ctx)
 }

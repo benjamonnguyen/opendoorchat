@@ -1,11 +1,11 @@
-package repository
+package repo
 
 import (
 	"context"
 	"log"
 
-	"github.com/benjamonnguyen/opendoor-chat-services/commons/config"
-	"github.com/benjamonnguyen/opendoor-chat-services/user-svc/model"
+	"github.com/benjamonnguyen/opendoor-chat/commons/config"
+	"github.com/benjamonnguyen/opendoor-chat/user-svc/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

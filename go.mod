@@ -1,4 +1,4 @@
-module github.com/benjamonnguyen/opendoor-chat-services
+module github.com/benjamonnguyen/opendoor-chat
 
 go 1.21.4
 
@@ -7,12 +7,14 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mailersend/mailersend-go v1.4.1
 	github.com/spf13/viper v1.17.0
+	github.com/stretchr/testify v1.8.4
 	github.com/urfave/negroni v1.0.0
 	google.golang.org/grpc v1.58.2
 )
 
 require (
 	github.com/cention-sany/utf7 v0.0.0-20170124080048-26cad61bd60a // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
@@ -26,8 +28,10 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.7.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect

@@ -25,3 +25,6 @@ NOTE: the beauty is that if clients don’t want to opt into the chatroom, they 
 3. The client is added to the user’s client list with a “Lead” tag (clients can be tagged with other useful things like “Follow up”, “Archived”, “Serviced”, etc)
 
 **Future features**: dashboard (revenue tracker), daily planner
+
+Monorepo
+HTMX
