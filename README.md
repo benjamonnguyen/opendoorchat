@@ -1,6 +1,5 @@
 # Opendoor.chat
 **Client management and chat platform**
-___
 
 ## Motivation
 Create a seamless chatroom/email integration to provide a better communication experience between vendor and clients.
