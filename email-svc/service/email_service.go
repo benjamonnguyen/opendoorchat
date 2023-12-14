@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/benjamonnguyen/opendoor-chat/commons/httputil"
+	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
 	"github.com/benjamonnguyen/opendoor-chat/email-svc/repo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -36,6 +36,7 @@ func (s *emailService) ThreadSearch(
 		return model.EmailThread{}, httputil.NewHttpError(
 			http.StatusBadRequest,
 			"missing ThreadSearchTerms",
+			"",
 		)
 	}
 
@@ -53,10 +54,10 @@ func (s *emailService) AddEmail(
 	email model.Email,
 ) httputil.HttpError {
 	if threadId == primitive.NilObjectID {
-		return httputil.NewHttpError(http.StatusBadRequest, "missing threadId")
+		return httputil.NewHttpError(http.StatusBadRequest, "missing threadId", "")
 	}
 	if email == (model.Email{}) {
-		return httputil.NewHttpError(http.StatusBadRequest, "missing email")
+		return httputil.NewHttpError(http.StatusBadRequest, "missing email", "")
 	}
 
 	if err := s.repo.AddEmail(ctx, threadId, email); err != nil {

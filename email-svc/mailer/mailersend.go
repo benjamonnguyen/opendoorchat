@@ -8,7 +8,7 @@ import (
 	"net/mail"
 	"time"
 
-	"github.com/benjamonnguyen/opendoor-chat/commons/httputil"
+	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
 	"github.com/jhillyerd/enmime"
 	"github.com/mailersend/mailersend-go"
@@ -85,7 +85,7 @@ func (mailer mailerSendMailer) GetEmail(
 			return model.Email{}, httputil.HttpErrorFromErr(err)
 		}
 		if resp.StatusCode != 200 {
-			return model.Email{}, httputil.NewHttpError(resp.StatusCode, resp.Status)
+			return model.Email{}, httputil.NewHttpError(resp.StatusCode, resp.Status, "")
 		}
 		if len(root.Data.Emails) == 0 {
 			backoff := time.Duration(math.Pow(6.0, float64(i))) * time.Second
@@ -97,5 +97,5 @@ func (mailer mailerSendMailer) GetEmail(
 			MessageId: fmt.Sprintf("<%s@mailersend.net>", root.Data.Emails[0].ID),
 		}, nil
 	}
-	return model.Email{}, httputil.NewHttpError(http.StatusNotFound, "")
+	return model.Email{}, httputil.NewHttpError(http.StatusNotFound, "", "")
 }

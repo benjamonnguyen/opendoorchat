@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/commons/config"
-	"github.com/benjamonnguyen/opendoor-chat/commons/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -46,6 +46,7 @@ func (repo *mongoEmailRepo) ThreadSearch(
 			return model.EmailThread{}, httputil.NewHttpError(
 				http.StatusBadRequest,
 				"invalid ChatId",
+				"",
 			)
 		}
 		orValues = append(orValues, bson.M{"chatId": id})
@@ -60,6 +61,7 @@ func (repo *mongoEmailRepo) ThreadSearch(
 		if res.Err() == mongo.ErrNoDocuments {
 			return model.EmailThread{}, httputil.NewHttpError(
 				http.StatusNotFound,
+				"",
 				res.Err().Error(),
 			)
 		}
@@ -87,6 +89,7 @@ func (repo *mongoEmailRepo) AddEmail(
 		if res.Err() == mongo.ErrNoDocuments {
 			return httputil.NewHttpError(
 				http.StatusNotFound,
+				"",
 				res.Err().Error(),
 			)
 		}

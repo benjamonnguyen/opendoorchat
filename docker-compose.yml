@@ -1,0 +1,11 @@
+version: '2.23.3'
+
+services:
+  opendoor-chat-services:
+    image: opendoorchatservices:latest
+    ports:
+      - "8080:8080"
+  # inbound-smtp-server:
+  #   image: inboundsmtpserver:latest
+  #   ports:
+  #     - "25:25"

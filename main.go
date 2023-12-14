@@ -10,6 +10,7 @@ import (
 	"github.com/benjamonnguyen/opendoor-chat/commons/mq"
 	"github.com/benjamonnguyen/opendoor-chat/commons/service"
 	"github.com/benjamonnguyen/opendoor-chat/email-svc/consumer"
+	emailctrl "github.com/benjamonnguyen/opendoor-chat/email-svc/controller"
 	"github.com/benjamonnguyen/opendoor-chat/email-svc/mailer"
 	emailrepo "github.com/benjamonnguyen/opendoor-chat/email-svc/repo"
 	emailservice "github.com/benjamonnguyen/opendoor-chat/email-svc/service"
@@ -26,6 +27,9 @@ func main() {
 	defer cancel()
 	shutdownManager := service.GracefulShutdownManager{}
 
+	// dependencies
+	m := mailer.NewMailerSendMailer(cfg.MailerSendApiKey)
+
 	// repositories
 	dbClient := initDbClient(ctx, cfg, shutdownManager)
 	emailRepo := emailrepo.NewMongoEmailRepo(cfg, dbClient)
@@ -33,20 +37,19 @@ func main() {
 	// services
 	emailService := emailservice.NewEmailService(emailRepo)
 
-	// dependencies
-	m := mailer.NewMailerSendMailer(cfg.MailerSendApiKey)
+	// controllers
+	emailCtrl := emailctrl.NewEmailController(emailService)
 
 	startEmailSvcConsumers(ctx, cfg, shutdownManager, emailService, m)
-	listenAndServeRoutes(ctx, cfg, shutdownManager)
+	listenAndServeRoutes(ctx, cfg, shutdownManager, emailCtrl)
 
-	log.Info().Msgf("started after %s", time.Since(start).Truncate(time.Second))
+	log.Info().Msgf("started application after %s", time.Since(start).Truncate(time.Second))
 
 	shutdownManager.ShutdownOnInterrupt(20 * time.Second)
 }
 
 func loadConfig() config.Config {
-	var cfg config.Config
-	config.LoadConfig("config", "yaml", ".", &cfg)
+	cfg := config.Load(".")
 	lvl, err := zerolog.ParseLevel(cfg.LogLevel)
 	if err != nil {
 		lvl = zerolog.InfoLevel
@@ -76,8 +79,10 @@ func listenAndServeRoutes(
 	ctx context.Context,
 	cfg config.Config,
 	shutdownManager service.GracefulShutdownManager,
+	emailCtrl emailctrl.EmailController,
 ) {
-	srv := buildServer(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port))
+	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+	srv := buildServer(addr, emailCtrl)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			log.Error().Err(err).Msg("failed srv.ListenAndServe")
@@ -88,6 +93,7 @@ func listenAndServeRoutes(
 			log.Error().Err(err).Msg("failed srv.Shutdown")
 		}
 	})
+	log.Info().Msgf("started http server on %s", addr)
 }
 
 func startEmailSvcConsumers(

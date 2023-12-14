@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/commons/config"
-	"github.com/benjamonnguyen/opendoor-chat/commons/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
 	usermodel "github.com/benjamonnguyen/opendoor-chat/user-svc/model"
 	"github.com/jhillyerd/enmime"

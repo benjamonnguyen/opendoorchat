@@ -23,18 +23,17 @@ type Config struct {
 	MailerSendApiKey string
 }
 
-func LoadConfig(name, cfgType, path string, cfg any) {
-	viper.SetConfigName(name)
-	viper.SetConfigType(cfgType)
+func Load(path string) Config {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath(path)
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalln("failed reading config file:", err)
 	}
 
-	if cfg == nil {
-		return
-	}
-	if err := viper.UnmarshalExact(cfg); err != nil {
+	var cfg Config
+	if err := viper.UnmarshalExact(&cfg); err != nil {
 		log.Fatalln("failed unmarshalling config:", err)
 	}
+	return cfg
 }
