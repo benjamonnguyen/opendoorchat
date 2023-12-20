@@ -3,21 +3,19 @@ module github.com/benjamonnguyen/opendoor-chat
 go 1.21.4
 
 require (
-	github.com/benjamonnguyen/gootils v1.0.1
+	github.com/benjamonnguyen/gootils v0.2.0
 	github.com/jhillyerd/enmime v1.0.1
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mailersend/mailersend-go v1.4.1
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/negroni v1.0.0
-	google.golang.org/grpc v1.58.2
 )
 
 require (
 	github.com/cention-sany/utf7 v0.0.0-20170124080048-26cad61bd60a // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/jaytaylor/html2text v0.0.0-20230321000545-74c2419ad056 // indirect
@@ -41,8 +39,6 @@ require (
 	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
 )
 
 require (

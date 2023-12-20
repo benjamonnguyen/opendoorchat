@@ -30,13 +30,11 @@ var (
 		FirstName: "John",
 		LastName:  "Smith",
 		Email:     fromEmail,
-		Username:  "johnsmith",
 	}
 	rcpt = usermodel.User{
 		FirstName: "Ben",
 		LastName:  "N",
 		Email:     "ben@yahoo.com",
-		Username:  "ben",
 	}
 )
 

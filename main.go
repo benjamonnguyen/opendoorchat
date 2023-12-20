@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/benjamonnguyen/gootils/devlog"
 	"github.com/benjamonnguyen/opendoor-chat/commons/config"
 	"github.com/benjamonnguyen/opendoor-chat/commons/db"
 	"github.com/benjamonnguyen/opendoor-chat/commons/mq"
@@ -14,6 +15,9 @@ import (
 	"github.com/benjamonnguyen/opendoor-chat/email-svc/mailer"
 	emailrepo "github.com/benjamonnguyen/opendoor-chat/email-svc/repo"
 	emailservice "github.com/benjamonnguyen/opendoor-chat/email-svc/service"
+	userctrl "github.com/benjamonnguyen/opendoor-chat/user-svc/controller"
+	userrepo "github.com/benjamonnguyen/opendoor-chat/user-svc/repo"
+	userservice "github.com/benjamonnguyen/opendoor-chat/user-svc/service"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,6 +26,7 @@ import (
 func main() {
 	start := time.Now()
 	cfg := loadConfig()
+	devlog.Enable(true)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -33,15 +38,18 @@ func main() {
 	// repositories
 	dbClient := initDbClient(ctx, cfg, shutdownManager)
 	emailRepo := emailrepo.NewMongoEmailRepo(cfg, dbClient)
+	userRepo := userrepo.NewMongoUserRepo(cfg, dbClient)
 
 	// services
 	emailService := emailservice.NewEmailService(emailRepo)
+	userService := userservice.NewUserService(userRepo)
 
 	// controllers
 	emailCtrl := emailctrl.NewEmailController(emailService)
+	userCtrl := userctrl.NewUserController(userService)
 
 	startEmailSvcConsumers(ctx, cfg, shutdownManager, emailService, m)
-	listenAndServeRoutes(ctx, cfg, shutdownManager, emailCtrl)
+	listenAndServeRoutes(ctx, cfg, shutdownManager, emailCtrl, userCtrl)
 
 	log.Info().Msgf("started application after %s", time.Since(start).Truncate(time.Second))
 
@@ -80,9 +88,10 @@ func listenAndServeRoutes(
 	cfg config.Config,
 	shutdownManager service.GracefulShutdownManager,
 	emailCtrl emailctrl.EmailController,
+	userCtrl userctrl.UserController,
 ) {
 	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
-	srv := buildServer(addr, emailCtrl)
+	srv := buildServer(addr, emailCtrl, userCtrl)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			log.Error().Err(err).Msg("failed srv.ListenAndServe")

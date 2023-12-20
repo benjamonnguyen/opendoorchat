@@ -3,18 +3,19 @@ package repo
 import (
 	"context"
 	"log"
+	"net/http"
 
+	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/commons/config"
 	"github.com/benjamonnguyen/opendoor-chat/user-svc/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type UserRepo interface {
-	GetUser(context.Context, string) (model.User, error)
+	GetUser(ctx context.Context, id string) (model.User, httputil.HttpError)
+	SearchUser(context.Context, model.UserSearchTerms) (model.User, httputil.HttpError)
 }
 
 type mongoUserRepo struct {
@@ -32,21 +33,57 @@ func NewMongoUserRepo(cfg config.Config, cl *mongo.Client) *mongoUserRepo {
 	}
 }
 
-func (repo *mongoUserRepo) GetUser(ctx context.Context, id string) (model.User, error) {
+func (repo *mongoUserRepo) GetUser(
+	ctx context.Context,
+	id string,
+) (model.User, httputil.HttpError) {
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return model.User{}, status.Error(codes.InvalidArgument, "invalid id")
+		return model.User{}, httputil.NewHttpError(http.StatusBadRequest, "invalid id", err.Error())
 	}
 	res := repo.usersCollection.FindOne(ctx, bson.M{"_id": objectId})
 	if res.Err() != nil {
 		if res.Err() == mongo.ErrNoDocuments {
-			return model.User{}, status.Error(codes.NotFound, res.Err().Error())
+			return model.User{}, httputil.NewHttpError(http.StatusNotFound, "", res.Err().Error())
 		}
-		return model.User{}, status.Error(codes.Internal, res.Err().Error())
+		return model.User{}, httputil.HttpErrorFromErr(res.Err())
 	}
 	var user model.User
 	if err := res.Decode(&user); err != nil {
-		return model.User{}, status.Error(codes.Internal, err.Error())
+		return model.User{}, httputil.HttpErrorFromErr(res.Err())
+	}
+	return user, nil
+}
+
+func (repo *mongoUserRepo) SearchUser(
+	ctx context.Context,
+	st model.UserSearchTerms,
+) (model.User, httputil.HttpError) {
+	//
+	var orValues []bson.M
+	if st.Email != "" {
+		orValues = append(orValues, bson.M{"email": st.Email})
+	}
+
+	//
+	res := repo.usersCollection.FindOne(ctx, bson.M{
+		"$or": orValues,
+	})
+	if res.Err() != nil {
+		if res.Err() == mongo.ErrNoDocuments {
+			return model.User{}, httputil.NewHttpError(
+				http.StatusNotFound,
+				"",
+				res.Err().Error(),
+			)
+		}
+		return model.User{}, httputil.HttpErrorFromErr(res.Err())
+	}
+
+	//
+	var user model.User
+	if err := res.Decode(&user); err != nil {
+		return model.User{}, httputil.HttpErrorFromErr(err)
 	}
 	return user, nil
 }
