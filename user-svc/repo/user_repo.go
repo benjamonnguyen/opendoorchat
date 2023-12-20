@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/commons/config"
@@ -14,6 +15,7 @@ import (
 )
 
 type UserRepo interface {
+	CreateUser(context.Context, model.User) error
 	GetUser(ctx context.Context, id string) (model.User, httputil.HttpError)
 	SearchUser(context.Context, model.UserSearchTerms) (model.User, httputil.HttpError)
 }
@@ -33,10 +35,30 @@ func NewMongoUserRepo(cfg config.Config, cl *mongo.Client) *mongoUserRepo {
 	}
 }
 
+func (repo *mongoUserRepo) CreateUser(ctx context.Context, user model.User) error {
+	if err := user.Validate(); err != nil {
+		return err
+	}
+	user.Id = ""
+	user.CreatedAt = time.Now()
+	_, err := repo.usersCollection.InsertOne(ctx, user)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (repo *mongoUserRepo) GetUser(
 	ctx context.Context,
 	id string,
 ) (model.User, httputil.HttpError) {
+	if id == "" {
+		return model.User{}, httputil.NewHttpError(
+			http.StatusBadRequest,
+			"required id is blank",
+			"",
+		)
+	}
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return model.User{}, httputil.NewHttpError(http.StatusBadRequest, "invalid id", err.Error())

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"time"
 )
@@ -16,6 +17,23 @@ type User struct {
 
 func (u User) Name() string {
 	return fmt.Sprintf("%s %s", u.FirstName, u.LastName)
+}
+
+func (u User) Validate() error {
+	if u.Email == "" {
+		return errors.New("required Email is missing")
+	}
+	if u.Password == "" {
+		return errors.New("required Password is missing")
+	}
+	if u.FirstName == "" {
+		return errors.New("required FirstName is missing")
+	}
+	if u.LastName == "" {
+		return errors.New("required LastName is missing")
+	}
+
+	return nil
 }
 
 type UserSearchTerms struct {

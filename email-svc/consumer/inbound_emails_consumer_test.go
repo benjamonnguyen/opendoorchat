@@ -96,7 +96,7 @@ func TestForwardEmail(t *testing.T) {
 
 	// emailService.AddEmail expectation
 	emailSvc.On("AddEmail", mock.Anything, thread.Id, email).Return(nil)
-	forwardEmail(context.TODO(), cfg, emailSvc, tMailer, record)
+	forwardEmail(context.Background(), cfg, emailSvc, tMailer, record)
 
 	emailSvc.AssertExpectations(t)
 	tMailer.AssertExpectations(t)

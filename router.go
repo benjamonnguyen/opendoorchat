@@ -20,9 +20,12 @@ func buildServer(
 	router.POST("/email/thread/search", emailCtrl.ThreadSearch)
 	// user
 	router.POST("/user/authenticate", userCtrl.Authenticate)
+	router.POST("/user", userCtrl.CreateUser)
 
 	n := negroni.Classic()
 	n.UseHandler(router)
+
+	// TODO auth middleware
 
 	return &http.Server{
 		Addr:         addr,

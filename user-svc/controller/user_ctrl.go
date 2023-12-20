@@ -5,13 +5,14 @@ import (
 	"net/http"
 
 	"github.com/benjamonnguyen/gootils/devlog"
+	"github.com/benjamonnguyen/opendoor-chat/user-svc/model"
 	"github.com/benjamonnguyen/opendoor-chat/user-svc/service"
 	"github.com/julienschmidt/httprouter"
 )
 
 type UserController interface {
 	Authenticate(http.ResponseWriter, *http.Request, httprouter.Params)
-	// TODO CreateUser
+	CreateUser(http.ResponseWriter, *http.Request, httprouter.Params)
 }
 
 type userCtrl struct {
@@ -22,6 +23,26 @@ func NewUserController(service service.UserService) *userCtrl {
 	return &userCtrl{
 		service: service,
 	}
+}
+
+func (ctrl *userCtrl) CreateUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// validate body
+	var user model.User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+	if err := user.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//
+	if err := ctrl.service.CreateUser(r.Context(), user); err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 }
 
 func (ctrl *userCtrl) Authenticate(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
