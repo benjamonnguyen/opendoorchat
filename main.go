@@ -26,7 +26,7 @@ import (
 func main() {
 	start := time.Now()
 	cfg := loadConfig()
-	devlog.Enable(true)
+	devlog.Init(true, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

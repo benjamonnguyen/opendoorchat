@@ -15,6 +15,7 @@ func buildServer(
 	emailCtrl emailctrl.EmailController,
 	userCtrl userctrl.UserController,
 ) *http.Server {
+	// TODO auth middleware (API key)
 	router := httprouter.New()
 	// email
 	router.POST("/email/thread/search", emailCtrl.ThreadSearch)

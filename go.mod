@@ -3,13 +3,14 @@ module github.com/benjamonnguyen/opendoor-chat
 go 1.21.4
 
 require (
-	github.com/benjamonnguyen/gootils v0.2.0
+	github.com/benjamonnguyen/gootils v0.4.0
 	github.com/jhillyerd/enmime v1.0.1
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mailersend/mailersend-go v1.4.1
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/negroni v1.0.0
+	golang.org/x/crypto v0.13.0
 )
 
 require (
@@ -36,7 +37,6 @@ require (
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
-	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 )

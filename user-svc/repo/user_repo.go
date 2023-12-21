@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/benjamonnguyen/gootils/httputil"
@@ -15,7 +16,7 @@ import (
 )
 
 type UserRepo interface {
-	CreateUser(context.Context, model.User) error
+	CreateUser(context.Context, model.User) httputil.HttpError
 	GetUser(ctx context.Context, id string) (model.User, httputil.HttpError)
 	SearchUser(context.Context, model.UserSearchTerms) (model.User, httputil.HttpError)
 }
@@ -35,15 +36,21 @@ func NewMongoUserRepo(cfg config.Config, cl *mongo.Client) *mongoUserRepo {
 	}
 }
 
-func (repo *mongoUserRepo) CreateUser(ctx context.Context, user model.User) error {
+func (repo *mongoUserRepo) CreateUser(ctx context.Context, user model.User) httputil.HttpError {
 	if err := user.Validate(); err != nil {
-		return err
+		return httputil.HttpErrorFromErr(err)
 	}
 	user.Id = ""
+	user.FirstName = fixCasing(user.FirstName)
+	user.LastName = fixCasing(user.LastName)
+	user.Email = strings.ToLower(user.Email)
 	user.CreatedAt = time.Now()
 	_, err := repo.usersCollection.InsertOne(ctx, user)
 	if err != nil {
-		return err
+		if mongo.IsDuplicateKeyError(err) {
+			return httputil.NewHttpError(409, "", err.Error())
+		}
+		return httputil.HttpErrorFromErr(err)
 	}
 	return nil
 }
@@ -84,7 +91,7 @@ func (repo *mongoUserRepo) SearchUser(
 	//
 	var orValues []bson.M
 	if st.Email != "" {
-		orValues = append(orValues, bson.M{"email": st.Email})
+		orValues = append(orValues, bson.M{"email": strings.ToLower(st.Email)})
 	}
 
 	//
@@ -108,4 +115,15 @@ func (repo *mongoUserRepo) SearchUser(
 		return model.User{}, httputil.HttpErrorFromErr(err)
 	}
 	return user, nil
+}
+
+func fixCasing(name string) string {
+	var res string
+	if len(name) > 0 {
+		res += strings.ToUpper(string(name[0]))
+	}
+	if len(name) > 1 {
+		res += strings.ToLower(string(name[1:]))
+	}
+	return res
 }

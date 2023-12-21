@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/benjamonnguyen/gootils/devlog"
 	"github.com/benjamonnguyen/opendoor-chat/user-svc/model"
 	"github.com/benjamonnguyen/opendoor-chat/user-svc/service"
 	"github.com/julienschmidt/httprouter"
+	"github.com/rs/zerolog/log"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserController interface {
@@ -29,17 +30,26 @@ func (ctrl *userCtrl) CreateUser(w http.ResponseWriter, r *http.Request, _ httpr
 	// validate body
 	var user model.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		log.Error().Err(err).Msg("CreateUser: failed decode")
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 	if err := user.Validate(); err != nil {
+		log.Error().Err(err).Interface("user", user).Msg("CreateUser: failed validate")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// hash password
+	hashedPw, err := bcrypt.GenerateFromPassword([]byte(user.Password), 0)
+	if err != nil {
+		log.Error().Err(err).Msg("CreateUser: failed GenerateFromPassword")
+	}
+	user.Password = string(hashedPw)
+
 	//
-	if err := ctrl.service.CreateUser(r.Context(), user); err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+	if httperr := ctrl.service.CreateUser(r.Context(), user); httperr != nil {
+		http.Error(w, httperr.Status(), httperr.StatusCode())
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -55,9 +65,8 @@ func (ctrl *userCtrl) Authenticate(w http.ResponseWriter, r *http.Request, _ htt
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
-	devlog.Printf("userctrl.Authenticate: %+v\n", body)
 	if body.Email == "" || body.Password == "" {
-		http.Error(w, "required email or password is blank", http.StatusBadRequest)
+		http.Error(w, "required email or password is empty", http.StatusBadRequest)
 		return
 	}
 

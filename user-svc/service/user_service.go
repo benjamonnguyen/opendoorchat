@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
 	"net/http"
 
 	"github.com/benjamonnguyen/gootils/devlog"
@@ -11,15 +10,16 @@ import (
 	"github.com/benjamonnguyen/opendoor-chat/user-svc/model"
 	"github.com/benjamonnguyen/opendoor-chat/user-svc/repo"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService interface {
-	CreateUser(context.Context, model.User) error
+	CreateUser(context.Context, model.User) httputil.HttpError
 	GetUser(ctx context.Context, id string) (model.User, httputil.HttpError)
 	Authenticate(
 		ctx context.Context,
 		email, password string,
-	) (token string, htterr httputil.HttpError)
+	) (token []byte, htterr httputil.HttpError)
 	SearchUser(context.Context, model.UserSearchTerms) (model.User, httputil.HttpError)
 }
 
@@ -33,12 +33,12 @@ func NewUserService(repo repo.UserRepo) *userService {
 	}
 }
 
-func (s *userService) CreateUser(ctx context.Context, user model.User) error {
-	err := s.repo.CreateUser(ctx, user)
-	if err != nil {
-		log.Error().Err(err).Msg("failed CreateUser")
+func (s *userService) CreateUser(ctx context.Context, user model.User) httputil.HttpError {
+	httperr := s.repo.CreateUser(ctx, user)
+	if httperr != nil && httputil.Is5xx(httperr.StatusCode()) {
+		log.Error().Err(httperr).Msg("failed CreateUser")
 	}
-	return err
+	return httperr
 }
 
 func (s *userService) GetUser(ctx context.Context, id string) (model.User, httputil.HttpError) {
@@ -70,22 +70,27 @@ func (s *userService) SearchUser(
 func (s *userService) Authenticate(
 	ctx context.Context,
 	email, password string,
-) (string, httputil.HttpError) {
+) ([]byte, httputil.HttpError) {
 	user, httperr := s.SearchUser(ctx, model.UserSearchTerms{Email: email})
 	if httperr != nil {
-		return "", httperr
-	}
-	devlog.Printf("userservice.Authenticate: SearchUser: %#v\n", user)
-
-	if password == user.Password {
-		// TODO generate bearer token
-		h := sha256.New()
-		if _, err := h.Write([]byte(email)); err != nil {
-			return "", httputil.HttpErrorFromErr(err)
+		if httputil.Is4xx(httperr.StatusCode()) {
+			devlog.Println(httperr)
+			// for security don't expose specific client error
+			return nil, httputil.NewHttpError(400, "", "")
 		}
-
-		return fmt.Sprintf("%x", h.Sum(nil)), nil
+		return nil, httperr
 	}
 
-	return "", httputil.NewHttpError(http.StatusUnauthorized, "", "")
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		devlog.Println(err)
+		return nil, httputil.NewHttpError(http.StatusUnauthorized, "", "")
+	}
+
+	// TODO generate bearer token
+	h := sha256.New()
+	if _, err := h.Write([]byte(email)); err != nil {
+		return nil, httputil.HttpErrorFromErr(err)
+	}
+
+	return h.Sum(nil), nil
 }
