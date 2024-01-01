@@ -3,7 +3,7 @@ module github.com/benjamonnguyen/opendoor-chat
 go 1.21.4
 
 require (
-	github.com/benjamonnguyen/gootils v0.4.0
+	github.com/benjamonnguyen/gootils v0.5.0
 	github.com/jhillyerd/enmime v1.0.1
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mailersend/mailersend-go v1.4.1

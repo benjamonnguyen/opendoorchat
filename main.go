@@ -90,8 +90,7 @@ func listenAndServeRoutes(
 	emailCtrl emailctrl.EmailController,
 	userCtrl userctrl.UserController,
 ) {
-	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
-	srv := buildServer(addr, emailCtrl, userCtrl)
+	srv := buildServer(cfg, emailCtrl, userCtrl)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			log.Error().Err(err).Msg("failed srv.ListenAndServe")
@@ -102,7 +101,7 @@ func listenAndServeRoutes(
 			log.Error().Err(err).Msg("failed srv.Shutdown")
 		}
 	})
-	log.Info().Msgf("started http server on %s", addr)
+	log.Info().Msgf("started http server on %s", srv.Addr)
 }
 
 func startEmailSvcConsumers(

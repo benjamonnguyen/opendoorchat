@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"net/http"
 
-	"github.com/benjamonnguyen/gootils/devlog"
 	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoor-chat/user-svc/model"
 	"github.com/benjamonnguyen/opendoor-chat/user-svc/repo"
@@ -73,16 +72,10 @@ func (s *userService) Authenticate(
 ) ([]byte, httputil.HttpError) {
 	user, httperr := s.SearchUser(ctx, model.UserSearchTerms{Email: email})
 	if httperr != nil {
-		if httputil.Is4xx(httperr.StatusCode()) {
-			devlog.Println(httperr)
-			// for security don't expose specific client error
-			return nil, httputil.NewHttpError(400, "", "")
-		}
 		return nil, httperr
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		devlog.Println(err)
 		return nil, httputil.NewHttpError(http.StatusUnauthorized, "", "")
 	}
 
