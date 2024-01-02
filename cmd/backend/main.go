@@ -7,16 +7,12 @@ import (
 
 	"github.com/benjamonnguyen/gootils/devlog"
 	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/email-svc/consumer"
-	emailctrl "github.com/benjamonnguyen/opendoorchat/email-svc/controller"
-	"github.com/benjamonnguyen/opendoorchat/email-svc/mailer"
-	emailrepo "github.com/benjamonnguyen/opendoorchat/email-svc/repo"
-	emailservice "github.com/benjamonnguyen/opendoorchat/email-svc/service"
 	"github.com/benjamonnguyen/opendoorchat/kafka"
+	"github.com/benjamonnguyen/opendoorchat/mailersend"
 	"github.com/benjamonnguyen/opendoorchat/mongodb"
-	userctrl "github.com/benjamonnguyen/opendoorchat/user-svc/controller"
-	userrepo "github.com/benjamonnguyen/opendoorchat/user-svc/repo"
-	userservice "github.com/benjamonnguyen/opendoorchat/user-svc/service"
+	"github.com/benjamonnguyen/opendoorchat/services/emailsvc"
+	"github.com/benjamonnguyen/opendoorchat/services/emailsvc/consumer"
+	"github.com/benjamonnguyen/opendoorchat/services/usersvc"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -32,20 +28,20 @@ func main() {
 	shutdownManager := opendoorchat.GracefulShutdownManager{}
 
 	// dependencies
-	m := mailer.NewMailerSendMailer(cfg.MailerSendApiKey)
+	m := mailersend.NewMailer(cfg.MailerSendApiKey)
 
 	// repositories
 	dbClient := initDbClient(ctx, cfg, shutdownManager)
-	emailRepo := emailrepo.NewMongoEmailRepo(cfg, dbClient)
-	userRepo := userrepo.NewMongoUserRepo(cfg, dbClient)
+	emailRepo := mongodb.NewEmailRepo(cfg, dbClient)
+	userRepo := mongodb.NewUserRepo(cfg, dbClient)
 
 	// services
-	emailService := emailservice.NewEmailService(emailRepo)
-	userService := userservice.NewUserService(userRepo)
+	emailService := emailsvc.NewEmailService(emailRepo)
+	userService := usersvc.NewUserService(userRepo)
 
 	// controllers
-	emailCtrl := emailctrl.NewEmailController(emailService)
-	userCtrl := userctrl.NewUserController(userService)
+	emailCtrl := emailsvc.NewEmailController(emailService)
+	userCtrl := usersvc.NewUserController(userService)
 
 	startEmailSvcConsumers(ctx, cfg, shutdownManager, emailService, m)
 	listenAndServeRoutes(ctx, cfg, shutdownManager, emailCtrl, userCtrl)
@@ -86,8 +82,8 @@ func listenAndServeRoutes(
 	ctx context.Context,
 	cfg opendoorchat.Config,
 	shutdownManager opendoorchat.GracefulShutdownManager,
-	emailCtrl emailctrl.EmailController,
-	userCtrl userctrl.UserController,
+	emailCtrl emailsvc.EmailController,
+	userCtrl usersvc.UserController,
 ) {
 	srv := buildServer(cfg, emailCtrl, userCtrl)
 	go func() {
@@ -107,8 +103,8 @@ func startEmailSvcConsumers(
 	ctx context.Context,
 	cfg opendoorchat.Config,
 	shutdownManager opendoorchat.GracefulShutdownManager,
-	emailService emailservice.EmailService,
-	m mailer.Mailer,
+	emailService emailsvc.EmailService,
+	m emailsvc.Mailer,
 ) {
 	consumerCl := kafka.NewSplitConsumerClient(
 		ctx,

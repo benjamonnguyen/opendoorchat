@@ -1,11 +1,9 @@
-package controller
+package emailsvc
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
-	"github.com/benjamonnguyen/opendoorchat/email-svc/service"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -14,10 +12,10 @@ type EmailController interface {
 }
 
 type emailController struct {
-	service service.EmailService
+	service EmailService
 }
 
-func NewEmailController(service service.EmailService) *emailController {
+func NewEmailController(service EmailService) *emailController {
 	return &emailController{
 		service: service,
 	}
@@ -29,7 +27,7 @@ func (ctrl *emailController) ThreadSearch(
 	_ httprouter.Params,
 ) {
 	// decode search terms
-	var st model.ThreadSearchTerms
+	var st ThreadSearchTerms
 	if err := json.NewDecoder(req.Body).Decode(&st); err != nil {
 		http.Error(w, "provide ThreadSearchTerms", http.StatusBadRequest)
 		return

@@ -1,4 +1,4 @@
-package mailer
+package mailersend
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/benjamonnguyen/gootils/httputil"
-	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
+	"github.com/benjamonnguyen/opendoorchat/services/emailsvc"
 	"github.com/jhillyerd/enmime"
 	"github.com/mailersend/mailersend-go"
 	"github.com/rs/zerolog/log"
@@ -19,8 +19,8 @@ type mailerSendMailer struct {
 	client *mailersend.Mailersend
 }
 
-// NewMailerSendMailer constructs a MailerSend API adapter for the Mailer interface
-func NewMailerSendMailer(apiKey string) mailerSendMailer {
+// NewMailer constructs a MailerSend API adapter for the Mailer interface
+func NewMailer(apiKey string) mailerSendMailer {
 	return mailerSendMailer{
 		client: mailersend.NewMailersend(apiKey),
 	}
@@ -77,15 +77,15 @@ func (mailer mailerSendMailer) Send(
 func (mailer mailerSendMailer) GetEmail(
 	ctx context.Context,
 	mailerMsgId string,
-) (model.Email, httputil.HttpError) {
+) (emailsvc.Email, httputil.HttpError) {
 	for i := 0; i < 3; i++ {
 		root, resp, err := mailer.client.Message.Get(ctx, mailerMsgId)
 		if err != nil {
 			log.Error().Err(err).Str("mailerMsgId", mailerMsgId).Msg("failed Message.Get")
-			return model.Email{}, httputil.HttpErrorFromErr(err)
+			return emailsvc.Email{}, httputil.HttpErrorFromErr(err)
 		}
 		if resp.StatusCode != 200 {
-			return model.Email{}, httputil.NewHttpError(resp.StatusCode, resp.Status, "")
+			return emailsvc.Email{}, httputil.NewHttpError(resp.StatusCode, resp.Status, "")
 		}
 		if len(root.Data.Emails) == 0 {
 			backoff := time.Duration(math.Pow(6.0, float64(i))) * time.Second
@@ -93,9 +93,9 @@ func (mailer mailerSendMailer) GetEmail(
 			time.Sleep(backoff)
 			continue
 		}
-		return model.Email{
+		return emailsvc.Email{
 			MessageId: fmt.Sprintf("<%s@mailersend.net>", root.Data.Emails[0].ID),
 		}, nil
 	}
-	return model.Email{}, httputil.NewHttpError(http.StatusNotFound, "", "")
+	return emailsvc.Email{}, httputil.NewHttpError(http.StatusNotFound, "", "")
 }

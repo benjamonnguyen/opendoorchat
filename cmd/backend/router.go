@@ -6,23 +6,23 @@ import (
 	"time"
 
 	"github.com/benjamonnguyen/opendoorchat"
-	emailctrl "github.com/benjamonnguyen/opendoorchat/email-svc/controller"
-	userctrl "github.com/benjamonnguyen/opendoorchat/user-svc/controller"
+	"github.com/benjamonnguyen/opendoorchat/services/emailsvc"
+	"github.com/benjamonnguyen/opendoorchat/services/usersvc"
 	"github.com/julienschmidt/httprouter"
 	"github.com/urfave/negroni"
 )
 
 func buildServer(
 	cfg opendoorchat.Config,
-	emailCtrl emailctrl.EmailController,
-	userCtrl userctrl.UserController,
+	emailsvc emailsvc.EmailController,
+	usersvc usersvc.UserController,
 ) *http.Server {
 	router := httprouter.New()
 	// email
-	router.POST("/email/thread/search", emailCtrl.ThreadSearch)
+	router.POST("/email/thread/search", emailsvc.ThreadSearch)
 	// user
-	router.POST("/user/authenticate", userCtrl.Authenticate)
-	router.POST("/user", userCtrl.CreateUser)
+	router.POST("/user/authenticate", usersvc.Authenticate)
+	router.POST("/user", usersvc.CreateUser)
 
 	n := negroni.Classic()
 	// n.UseFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

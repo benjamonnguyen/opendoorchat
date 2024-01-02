@@ -8,8 +8,8 @@ import (
 
 	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
-	usermodel "github.com/benjamonnguyen/opendoorchat/user-svc/model"
+	"github.com/benjamonnguyen/opendoorchat/services/emailsvc"
+	"github.com/benjamonnguyen/opendoorchat/services/usersvc"
 	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/mock"
@@ -26,12 +26,12 @@ const (
 var (
 	emailSvc *emailService
 	tMailer  *testMailer
-	sender   = usermodel.User{
+	sender   = usersvc.User{
 		FirstName: "John",
 		LastName:  "Smith",
 		Email:     fromEmail,
 	}
-	rcpt = usermodel.User{
+	rcpt = usersvc.User{
 		FirstName: "Ben",
 		LastName:  "N",
 		Email:     "ben@yahoo.com",
@@ -59,16 +59,16 @@ func TestForwardEmail(t *testing.T) {
 	}
 
 	// emailService.ThreadSearch expectation
-	thread := model.EmailThread{
+	thread := emailsvc.EmailThread{
 		Id:           primitive.NewObjectID(),
-		Participants: []usermodel.User{sender, rcpt},
-		Emails: []model.Email{
+		Participants: []usersvc.User{sender, rcpt},
+		Emails: []emailsvc.Email{
 			{
 				MessageId: inReplyTo,
 			},
 		},
 	}
-	emailSvc.On("ThreadSearch", mock.Anything, mock.MatchedBy(func(st model.ThreadSearchTerms) bool {
+	emailSvc.On("ThreadSearch", mock.Anything, mock.MatchedBy(func(st emailsvc.ThreadSearchTerms) bool {
 		return st.EmailMessageId == inReplyTo
 	})).
 		Return(thread, nil)
@@ -89,7 +89,7 @@ func TestForwardEmail(t *testing.T) {
 	}, nil)
 
 	// mailer.GetEmail expectation
-	email := model.Email{
+	email := emailsvc.Email{
 		MessageId: fmt.Sprintf("<%s@mailersend.net>", mailerMsgId),
 	}
 	tMailer.On("GetEmail", mock.Anything, mailerMsgId).Return(email, nil)
@@ -109,20 +109,20 @@ type emailService struct {
 
 func (s *emailService) ThreadSearch(
 	ctx context.Context,
-	st model.ThreadSearchTerms,
-) (model.EmailThread, httputil.HttpError) {
+	st emailsvc.ThreadSearchTerms,
+) (emailsvc.EmailThread, httputil.HttpError) {
 	args := s.Called(ctx, st)
 	err := args.Get(1)
 	if err != nil {
-		return args.Get(0).(model.EmailThread), err.(httputil.HttpError)
+		return args.Get(0).(emailsvc.EmailThread), err.(httputil.HttpError)
 	}
-	return args.Get(0).(model.EmailThread), nil
+	return args.Get(0).(emailsvc.EmailThread), nil
 }
 
 func (s *emailService) AddEmail(
 	ctx context.Context,
 	threadId primitive.ObjectID,
-	email model.Email,
+	email emailsvc.Email,
 ) httputil.HttpError {
 	args := s.Called(ctx, threadId, email)
 	err := args.Get(0)
@@ -139,9 +139,9 @@ type testMailer struct {
 func (m *testMailer) GetEmail(
 	ctx context.Context,
 	id string,
-) (model.Email, httputil.HttpError) {
+) (emailsvc.Email, httputil.HttpError) {
 	args := m.Called(ctx, id)
-	eml := args.Get(0).(model.Email)
+	eml := args.Get(0).(emailsvc.Email)
 	err := args.Get(1)
 	if err != nil {
 		return eml, err.(httputil.HttpError)

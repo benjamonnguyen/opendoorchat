@@ -1,14 +1,14 @@
 version: '2.23.3'
 
 services:
-  opendoor-chat-backend:
-    image: opendoor-chat-backend:latest
+  opendoor-chat-services:
+    image: opendoor-chat-services:latest
     ports:
       - "8080:8080"
-  opendoor-chat-frontend:
-    image: opendoor-chat-frontend:latest
-    ports:
-    - "3000:3000"
+  # opendoor-chat-frontend:
+  #   image: opendoor-chat-frontend:latest
+  #   ports:
+  #   - "3000:3000"
   # inbound-smtp-server:
   #   image: inboundsmtpserver:latest
   #   ports:

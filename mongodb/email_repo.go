@@ -1,4 +1,4 @@
-package repo
+package mongodb
 
 import (
 	"context"
@@ -8,23 +8,18 @@ import (
 
 	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
+	"github.com/benjamonnguyen/opendoorchat/services/emailsvc"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type EmailRepo interface {
-	ThreadSearch(context.Context, model.ThreadSearchTerms) (model.EmailThread, httputil.HttpError)
-	AddEmail(context.Context, primitive.ObjectID, model.Email) httputil.HttpError
-}
-
 type mongoEmailRepo struct {
 	emailThreadsCollection *mongo.Collection
 }
 
-func NewMongoEmailRepo(cfg opendoorchat.Config, cl *mongo.Client) *mongoEmailRepo {
+func NewEmailRepo(cfg opendoorchat.Config, cl *mongo.Client) *mongoEmailRepo {
 	emailThreadsCollection := cl.Database(cfg.Mongo.Database).Collection("emailThreads")
 	if emailThreadsCollection == nil {
 		log.Fatalln("emailThreads collection does not exist")
@@ -37,13 +32,13 @@ func NewMongoEmailRepo(cfg opendoorchat.Config, cl *mongo.Client) *mongoEmailRep
 
 func (repo *mongoEmailRepo) ThreadSearch(
 	ctx context.Context,
-	st model.ThreadSearchTerms,
-) (model.EmailThread, httputil.HttpError) {
+	st emailsvc.ThreadSearchTerms,
+) (emailsvc.EmailThread, httputil.HttpError) {
 	var orValues []bson.M
 	if st.ChatId != "" {
 		id, err := primitive.ObjectIDFromHex(st.ChatId)
 		if err != nil {
-			return model.EmailThread{}, httputil.NewHttpError(
+			return emailsvc.EmailThread{}, httputil.NewHttpError(
 				http.StatusBadRequest,
 				"invalid ChatId",
 				"",
@@ -59,17 +54,17 @@ func (repo *mongoEmailRepo) ThreadSearch(
 	})
 	if res.Err() != nil {
 		if res.Err() == mongo.ErrNoDocuments {
-			return model.EmailThread{}, httputil.NewHttpError(
+			return emailsvc.EmailThread{}, httputil.NewHttpError(
 				http.StatusNotFound,
 				"",
 				res.Err().Error(),
 			)
 		}
-		return model.EmailThread{}, httputil.HttpErrorFromErr(res.Err())
+		return emailsvc.EmailThread{}, httputil.HttpErrorFromErr(res.Err())
 	}
-	var thread model.EmailThread
+	var thread emailsvc.EmailThread
 	if err := res.Decode(&thread); err != nil {
-		return model.EmailThread{}, httputil.HttpErrorFromErr(err)
+		return emailsvc.EmailThread{}, httputil.HttpErrorFromErr(err)
 	}
 	return thread, nil
 }
@@ -77,7 +72,7 @@ func (repo *mongoEmailRepo) ThreadSearch(
 func (repo *mongoEmailRepo) AddEmail(
 	ctx context.Context,
 	threadId primitive.ObjectID,
-	email model.Email,
+	email emailsvc.Email,
 ) httputil.HttpError {
 	email.SentAt = time.Now()
 	res := repo.emailThreadsCollection.FindOneAndUpdate(ctx, bson.M{"_id": threadId}, bson.M{

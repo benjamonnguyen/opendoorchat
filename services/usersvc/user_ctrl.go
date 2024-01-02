@@ -1,11 +1,9 @@
-package controller
+package usersvc
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/benjamonnguyen/opendoorchat/user-svc/model"
-	"github.com/benjamonnguyen/opendoorchat/user-svc/service"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
@@ -17,10 +15,10 @@ type UserController interface {
 }
 
 type userCtrl struct {
-	service service.UserService
+	service UserService
 }
 
-func NewUserController(service service.UserService) *userCtrl {
+func NewUserController(service UserService) *userCtrl {
 	return &userCtrl{
 		service: service,
 	}
@@ -28,7 +26,7 @@ func NewUserController(service service.UserService) *userCtrl {
 
 func (ctrl *userCtrl) CreateUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// validate body
-	var user model.User
+	var user User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		log.Error().Err(err).Msg("CreateUser: failed decode")
 		http.Error(w, "", http.StatusBadRequest)

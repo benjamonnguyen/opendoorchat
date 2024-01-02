@@ -8,10 +8,8 @@ import (
 	"time"
 
 	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/email-svc/mailer"
-	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
-	"github.com/benjamonnguyen/opendoorchat/email-svc/service"
 	"github.com/benjamonnguyen/opendoorchat/kafka"
+	"github.com/benjamonnguyen/opendoorchat/services/emailsvc"
 	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog/log"
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -24,8 +22,8 @@ const (
 func AddInboundEmailsConsumer(
 	ctx context.Context,
 	cfg opendoorchat.Config,
-	emailSvc service.EmailService,
-	m mailer.Mailer,
+	emailSvc emailsvc.EmailService,
+	m emailsvc.Mailer,
 	cl kafka.KafkaConsumerClient,
 ) {
 	if err := cl.SetRecordHandler(cfg.Kafka.Topics[inboundEmailsConsumer], func(rec *kgo.Record) {
@@ -41,8 +39,8 @@ func AddInboundEmailsConsumer(
 func forwardEmail(
 	ctx context.Context,
 	cfg opendoorchat.Config,
-	emailSvc service.EmailService,
-	m mailer.Mailer,
+	emailSvc emailsvc.EmailService,
+	m emailsvc.Mailer,
 	rec *kgo.Record,
 ) {
 	start := time.Now()
@@ -62,7 +60,7 @@ func forwardEmail(
 	msgId := inbound.GetHeader("In-Reply-To")
 	threadCtx, threadCanc := context.WithTimeout(ctx, cfg.ReadTimeout)
 	defer threadCanc()
-	st := model.ThreadSearchTerms{
+	st := emailsvc.ThreadSearchTerms{
 		EmailMessageId: msgId,
 	}
 	thread, httperr := emailSvc.ThreadSearch(threadCtx, st)

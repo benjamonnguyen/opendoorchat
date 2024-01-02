@@ -1,11 +1,18 @@
-package model
+package emailsvc
 
 import (
+	"context"
 	"time"
 
-	usermodel "github.com/benjamonnguyen/opendoorchat/user-svc/model"
+	"github.com/benjamonnguyen/gootils/httputil"
+	"github.com/benjamonnguyen/opendoorchat/services/usersvc"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+type EmailRepo interface {
+	ThreadSearch(context.Context, ThreadSearchTerms) (EmailThread, httputil.HttpError)
+	AddEmail(context.Context, primitive.ObjectID, Email) httputil.HttpError
+}
 
 type Email struct {
 	MessageId string    `json:"messageId,omitempty" bson:"messageId"`
@@ -14,7 +21,7 @@ type Email struct {
 
 type EmailThread struct {
 	Id           primitive.ObjectID `json:"id,omitempty"        bson:"_id"`
-	Participants []usermodel.User   `                           bson:"participants"`
+	Participants []usersvc.User     `                           bson:"participants"`
 	Emails       []Email            `json:"emails,omitempty"    bson:"emails"`
 	ChatId       primitive.ObjectID `json:"chatId,omitempty"    bson:"chatId"`
 	CreatedAt    time.Time          `json:"createdAt,omitempty" bson:"createdAt"`

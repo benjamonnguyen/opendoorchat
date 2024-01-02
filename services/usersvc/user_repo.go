@@ -1,10 +1,19 @@
-package model
+package usersvc
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/benjamonnguyen/gootils/httputil"
 )
+
+type UserRepo interface {
+	CreateUser(context.Context, User) httputil.HttpError
+	GetUser(ctx context.Context, id string) (User, httputil.HttpError)
+	SearchUser(context.Context, UserSearchTerms) (User, httputil.HttpError)
+}
 
 type User struct {
 	Id        string `json:"id,omitempty"        bson:"_id,omitempty"`
