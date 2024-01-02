@@ -1,4 +1,4 @@
-package mq
+package kafka
 
 import (
 	"context"
@@ -10,19 +10,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/benjamonnguyen/opendoorchat"
 	"github.com/rs/zerolog/log"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/sasl/scram"
 )
-
-type KafkaConfig struct {
-	Brokers        string
-	User           string
-	Password       string
-	MaxPollRecords int
-	Topics         map[string]string
-	LogLevel       int
-}
 
 type KafkaConsumerClient interface {
 	SetRecordHandler(string, func(*kgo.Record)) error
@@ -32,7 +24,7 @@ type KafkaConsumerClient interface {
 
 func NewSplitConsumerClient(
 	ctx context.Context,
-	cfg KafkaConfig,
+	cfg opendoorchat.KafkaConfig,
 	groupId string,
 ) *splitConsumerClient {
 	s := &splitConsumerClient{

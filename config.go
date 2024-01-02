@@ -1,11 +1,9 @@
-package config
+package opendoorchat
 
 import (
 	"log"
 	"time"
 
-	"github.com/benjamonnguyen/opendoor-chat/commons/db"
-	"github.com/benjamonnguyen/opendoor-chat/commons/mq"
 	"github.com/spf13/viper"
 )
 
@@ -17,13 +15,13 @@ type Config struct {
 	ReadTimeout      time.Duration
 	WriteTimeout     time.Duration
 	RequestTimeout   time.Duration
-	Mongo            db.MongoConfig
-	Kafka            mq.KafkaConfig
+	Mongo            MongoConfig
+	Kafka            KafkaConfig
 	Consumers        struct{}
 	MailerSendApiKey string
 }
 
-func Load(path string) Config {
+func LoadConfig(path string) Config {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(path)
@@ -36,4 +34,18 @@ func Load(path string) Config {
 		log.Fatalln("failed unmarshalling config:", err)
 	}
 	return cfg
+}
+
+type MongoConfig struct {
+	URI      string
+	Database string
+}
+
+type KafkaConfig struct {
+	Brokers        string
+	User           string
+	Password       string
+	MaxPollRecords int
+	Topics         map[string]string
+	LogLevel       int
 }

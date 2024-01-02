@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/benjamonnguyen/gootils/httputil"
-	"github.com/benjamonnguyen/opendoor-chat/commons/config"
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
-	usermodel "github.com/benjamonnguyen/opendoor-chat/user-svc/model"
+	"github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
+	usermodel "github.com/benjamonnguyen/opendoorchat/user-svc/model"
 	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/mock"
@@ -51,7 +51,7 @@ func TestForwardEmail(t *testing.T) {
 		inReplyTo = "<65457bb0435d314ea86090d1@mailersend.net>"
 		text      = "Hello, world!\r\n\r\nOn Nov 3, 2023, at 16:01, ben@domain.com wrote:\r\n> \r\n> \ufeffTest\r\n\r\n"
 	)
-	cfg := config.Config{
+	cfg := opendoorchat.Config{
 		Domain: "domain.com",
 	}
 	record := &kgo.Record{

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/benjamonnguyen/gootils/httputil"
-	"github.com/benjamonnguyen/opendoor-chat/commons/config"
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
+	"github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,7 +24,7 @@ type mongoEmailRepo struct {
 	emailThreadsCollection *mongo.Collection
 }
 
-func NewMongoEmailRepo(cfg config.Config, cl *mongo.Client) *mongoEmailRepo {
+func NewMongoEmailRepo(cfg opendoorchat.Config, cl *mongo.Client) *mongoEmailRepo {
 	emailThreadsCollection := cl.Database(cfg.Mongo.Database).Collection("emailThreads")
 	if emailThreadsCollection == nil {
 		log.Fatalln("emailThreads collection does not exist")

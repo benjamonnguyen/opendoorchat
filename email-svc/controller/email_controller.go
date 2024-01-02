@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/service"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/service"
 	"github.com/julienschmidt/httprouter"
 )
 

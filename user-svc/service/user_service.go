@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/benjamonnguyen/gootils/httputil"
-	"github.com/benjamonnguyen/opendoor-chat/user-svc/model"
-	"github.com/benjamonnguyen/opendoor-chat/user-svc/repo"
+	"github.com/benjamonnguyen/opendoorchat/user-svc/model"
+	"github.com/benjamonnguyen/opendoorchat/user-svc/repo"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )

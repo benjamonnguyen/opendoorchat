@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/benjamonnguyen/gootils/httputil"
-	"github.com/benjamonnguyen/opendoor-chat/commons/config"
-	"github.com/benjamonnguyen/opendoor-chat/user-svc/model"
+	"github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/user-svc/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -25,7 +25,7 @@ type mongoUserRepo struct {
 	usersCollection *mongo.Collection
 }
 
-func NewMongoUserRepo(cfg config.Config, cl *mongo.Client) *mongoUserRepo {
+func NewMongoUserRepo(cfg opendoorchat.Config, cl *mongo.Client) *mongoUserRepo {
 	usersCollection := cl.Database(cfg.Mongo.Database).Collection("users")
 	if usersCollection == nil {
 		log.Fatalln("users collection does not exist")

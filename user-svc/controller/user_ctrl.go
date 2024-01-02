@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/benjamonnguyen/opendoor-chat/user-svc/model"
-	"github.com/benjamonnguyen/opendoor-chat/user-svc/service"
+	"github.com/benjamonnguyen/opendoorchat/user-svc/model"
+	"github.com/benjamonnguyen/opendoorchat/user-svc/service"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"

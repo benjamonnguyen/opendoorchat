@@ -1,4 +1,4 @@
-package db
+package mongodb
 
 import (
 	"context"
@@ -6,14 +6,11 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/benjamonnguyen/opendoorchat"
 )
 
-type MongoConfig struct {
-	URI      string
-	Database string
-}
-
-func ConnectMongoClient(ctx context.Context, cfg MongoConfig) *mongo.Client {
+func ConnectMongoClient(ctx context.Context, cfg opendoorchat.MongoConfig) *mongo.Client {
 	opts := options.Client().ApplyURI(cfg.URI).
 		SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1))
 	c, err := mongo.Connect(ctx, opts)

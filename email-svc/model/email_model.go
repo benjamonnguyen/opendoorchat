@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	usermodel "github.com/benjamonnguyen/opendoor-chat/user-svc/model"
+	usermodel "github.com/benjamonnguyen/opendoorchat/user-svc/model"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

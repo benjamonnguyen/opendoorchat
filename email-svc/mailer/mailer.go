@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/benjamonnguyen/gootils/httputil"
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
 	"github.com/jhillyerd/enmime"
 )
 

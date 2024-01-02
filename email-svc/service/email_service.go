@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/benjamonnguyen/gootils/httputil"
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/repo"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/repo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

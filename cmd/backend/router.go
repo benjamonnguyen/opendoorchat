@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/benjamonnguyen/opendoor-chat/commons/config"
-	emailctrl "github.com/benjamonnguyen/opendoor-chat/email-svc/controller"
-	userctrl "github.com/benjamonnguyen/opendoor-chat/user-svc/controller"
+	"github.com/benjamonnguyen/opendoorchat"
+	emailctrl "github.com/benjamonnguyen/opendoorchat/email-svc/controller"
+	userctrl "github.com/benjamonnguyen/opendoorchat/user-svc/controller"
 	"github.com/julienschmidt/httprouter"
 	"github.com/urfave/negroni"
 )
 
 func buildServer(
-	cfg config.Config,
+	cfg opendoorchat.Config,
 	emailCtrl emailctrl.EmailController,
 	userCtrl userctrl.UserController,
 ) *http.Server {

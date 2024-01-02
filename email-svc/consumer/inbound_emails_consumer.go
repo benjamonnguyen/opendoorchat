@@ -7,11 +7,11 @@ import (
 	"net/mail"
 	"time"
 
-	"github.com/benjamonnguyen/opendoor-chat/commons/config"
-	"github.com/benjamonnguyen/opendoor-chat/commons/mq"
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/mailer"
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/model"
-	"github.com/benjamonnguyen/opendoor-chat/email-svc/service"
+	"github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/mailer"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/model"
+	"github.com/benjamonnguyen/opendoorchat/email-svc/service"
+	"github.com/benjamonnguyen/opendoorchat/kafka"
 	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog/log"
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -23,10 +23,10 @@ const (
 
 func AddInboundEmailsConsumer(
 	ctx context.Context,
-	cfg config.Config,
+	cfg opendoorchat.Config,
 	emailSvc service.EmailService,
 	m mailer.Mailer,
-	cl mq.KafkaConsumerClient,
+	cl kafka.KafkaConsumerClient,
 ) {
 	if err := cl.SetRecordHandler(cfg.Kafka.Topics[inboundEmailsConsumer], func(rec *kgo.Record) {
 		forwardEmail(ctx, cfg, emailSvc, m, rec)
@@ -40,7 +40,7 @@ func AddInboundEmailsConsumer(
 // matching the "In-Reply-To" header
 func forwardEmail(
 	ctx context.Context,
-	cfg config.Config,
+	cfg opendoorchat.Config,
 	emailSvc service.EmailService,
 	m mailer.Mailer,
 	rec *kgo.Record,
