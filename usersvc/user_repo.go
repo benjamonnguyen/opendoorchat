@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/benjamonnguyen/gootils/httputil"
+	"github.com/benjamonnguyen/opendoorchat"
 )
 
 type UserRepo interface {
-	CreateUser(context.Context, User) httputil.HttpError
-	GetUser(ctx context.Context, id string) (User, httputil.HttpError)
-	SearchUser(context.Context, UserSearchTerms) (User, httputil.HttpError)
+	CreateUser(context.Context, User) opendoorchat.Error
+	GetUser(ctx context.Context, id string) (User, opendoorchat.Error)
+	SearchUser(context.Context, UserSearchTerms) (User, opendoorchat.Error)
 }
 
 type User struct {

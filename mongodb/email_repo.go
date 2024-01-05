@@ -2,18 +2,20 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"net/http"
 	"time"
 
-	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/services/emailsvc"
+	"github.com/benjamonnguyen/opendoorchat/emailsvc"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// Ensure interface is implemented
+var _ emailsvc.EmailRepo = (*mongoEmailRepo)(nil)
 
 type mongoEmailRepo struct {
 	emailThreadsCollection *mongo.Collection
@@ -33,16 +35,13 @@ func NewEmailRepo(cfg opendoorchat.Config, cl *mongo.Client) *mongoEmailRepo {
 func (repo *mongoEmailRepo) ThreadSearch(
 	ctx context.Context,
 	st emailsvc.ThreadSearchTerms,
-) (emailsvc.EmailThread, httputil.HttpError) {
+) (emailsvc.EmailThread, opendoorchat.Error) {
+	const op = "mongoEmailRepo.ThreadSearch"
 	var orValues []bson.M
 	if st.ChatId != "" {
 		id, err := primitive.ObjectIDFromHex(st.ChatId)
 		if err != nil {
-			return emailsvc.EmailThread{}, httputil.NewHttpError(
-				http.StatusBadRequest,
-				"invalid ChatId",
-				"",
-			)
+			return emailsvc.EmailThread{}, opendoorchat.NewErr(400, "invalid ChatId", "")
 		}
 		orValues = append(orValues, bson.M{"chatId": id})
 	}
@@ -52,19 +51,12 @@ func (repo *mongoEmailRepo) ThreadSearch(
 	res := repo.emailThreadsCollection.FindOne(ctx, bson.M{
 		"$or": orValues,
 	})
-	if res.Err() != nil {
-		if res.Err() == mongo.ErrNoDocuments {
-			return emailsvc.EmailThread{}, httputil.NewHttpError(
-				http.StatusNotFound,
-				"",
-				res.Err().Error(),
-			)
-		}
-		return emailsvc.EmailThread{}, httputil.HttpErrorFromErr(res.Err())
-	}
 	var thread emailsvc.EmailThread
-	if err := res.Decode(&thread); err != nil {
-		return emailsvc.EmailThread{}, httputil.HttpErrorFromErr(err)
+	err := res.Decode(&thread)
+	if err == mongo.ErrNoDocuments {
+		return emailsvc.EmailThread{}, opendoorchat.NewErr(404, "", "")
+	} else if err != nil {
+		return emailsvc.EmailThread{}, opendoorchat.FromErr(err, fmt.Sprintf("%s: FindOne", op))
 	}
 	return thread, nil
 }
@@ -73,7 +65,8 @@ func (repo *mongoEmailRepo) AddEmail(
 	ctx context.Context,
 	threadId primitive.ObjectID,
 	email emailsvc.Email,
-) httputil.HttpError {
+) opendoorchat.Error {
+	const op = "mongoEmailRepo.AddEmail"
 	email.SentAt = time.Now()
 	res := repo.emailThreadsCollection.FindOneAndUpdate(ctx, bson.M{"_id": threadId}, bson.M{
 		"$push": bson.M{
@@ -82,13 +75,9 @@ func (repo *mongoEmailRepo) AddEmail(
 	}, options.FindOneAndUpdate().SetProjection(bson.M{"_id": -1}))
 	if res.Err() != nil {
 		if res.Err() == mongo.ErrNoDocuments {
-			return httputil.NewHttpError(
-				http.StatusNotFound,
-				"",
-				res.Err().Error(),
-			)
+			return opendoorchat.NewErr(404, "", "")
 		}
-		return httputil.HttpErrorFromErr(res.Err())
+		return opendoorchat.FromErr(res.Err(), fmt.Sprintf("%s: FindOneAndUpdate", op))
 	}
 	return nil
 }

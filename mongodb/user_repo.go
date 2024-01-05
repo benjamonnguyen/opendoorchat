@@ -3,17 +3,17 @@ package mongodb
 import (
 	"context"
 	"log"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/benjamonnguyen/gootils/httputil"
 	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/services/usersvc"
+	"github.com/benjamonnguyen/opendoorchat/usersvc"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
+
+var _ usersvc.UserRepo = (*mongoUserRepo)(nil)
 
 type mongoUserRepo struct {
 	usersCollection *mongo.Collection
@@ -30,9 +30,10 @@ func NewUserRepo(cfg opendoorchat.Config, cl *mongo.Client) *mongoUserRepo {
 	}
 }
 
-func (repo *mongoUserRepo) CreateUser(ctx context.Context, user usersvc.User) httputil.HttpError {
+func (repo *mongoUserRepo) CreateUser(ctx context.Context, user usersvc.User) opendoorchat.Error {
+	const op = "mongoUserRepo.CreateUser"
 	if err := user.Validate(); err != nil {
-		return httputil.HttpErrorFromErr(err)
+		return opendoorchat.FromErr(err, op)
 	}
 	user.Id = ""
 	user.FirstName = fixCasing(user.FirstName)
@@ -42,9 +43,9 @@ func (repo *mongoUserRepo) CreateUser(ctx context.Context, user usersvc.User) ht
 	_, err := repo.usersCollection.InsertOne(ctx, user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			return httputil.NewHttpError(409, "", err.Error())
+			return opendoorchat.NewErr(409, "", "")
 		}
-		return httputil.HttpErrorFromErr(err)
+		return opendoorchat.FromErr(err, op)
 	}
 	return nil
 }
@@ -52,32 +53,22 @@ func (repo *mongoUserRepo) CreateUser(ctx context.Context, user usersvc.User) ht
 func (repo *mongoUserRepo) GetUser(
 	ctx context.Context,
 	id string,
-) (usersvc.User, httputil.HttpError) {
+) (usersvc.User, opendoorchat.Error) {
+	const op = "mongoUserRepo.GetUser"
 	if id == "" {
-		return usersvc.User{}, httputil.NewHttpError(
-			http.StatusBadRequest,
-			"required id is blank",
-			"",
-		)
+		return usersvc.User{}, opendoorchat.NewErr(400, "required id is blank", "")
 	}
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return usersvc.User{}, httputil.NewHttpError(
-			http.StatusBadRequest,
-			"invalid id",
-			err.Error(),
-		)
+		return usersvc.User{}, opendoorchat.NewErr(400, "invalid id", "")
 	}
 	res := repo.usersCollection.FindOne(ctx, bson.M{"_id": objectId})
-	if res.Err() != nil {
-		if res.Err() == mongo.ErrNoDocuments {
-			return usersvc.User{}, httputil.NewHttpError(http.StatusNotFound, "", res.Err().Error())
-		}
-		return usersvc.User{}, httputil.HttpErrorFromErr(res.Err())
-	}
 	var user usersvc.User
 	if err := res.Decode(&user); err != nil {
-		return usersvc.User{}, httputil.HttpErrorFromErr(res.Err())
+		if err == mongo.ErrNoDocuments {
+			return usersvc.User{}, opendoorchat.NewErr(404, "", "")
+		}
+		return usersvc.User{}, opendoorchat.FromErr(err, op)
 	}
 	return user, nil
 }
@@ -85,7 +76,8 @@ func (repo *mongoUserRepo) GetUser(
 func (repo *mongoUserRepo) SearchUser(
 	ctx context.Context,
 	st usersvc.UserSearchTerms,
-) (usersvc.User, httputil.HttpError) {
+) (usersvc.User, opendoorchat.Error) {
+	const op = "mongoUserRepo.SearchUser"
 	//
 	var orValues []bson.M
 	if st.Email != "" {
@@ -96,21 +88,12 @@ func (repo *mongoUserRepo) SearchUser(
 	res := repo.usersCollection.FindOne(ctx, bson.M{
 		"$or": orValues,
 	})
-	if res.Err() != nil {
-		if res.Err() == mongo.ErrNoDocuments {
-			return usersvc.User{}, httputil.NewHttpError(
-				http.StatusNotFound,
-				"",
-				res.Err().Error(),
-			)
-		}
-		return usersvc.User{}, httputil.HttpErrorFromErr(res.Err())
-	}
-
-	//
 	var user usersvc.User
 	if err := res.Decode(&user); err != nil {
-		return usersvc.User{}, httputil.HttpErrorFromErr(err)
+		if err == mongo.ErrNoDocuments {
+			return usersvc.User{}, opendoorchat.NewErr(404, "", "")
+		}
+		return usersvc.User{}, opendoorchat.FromErr(err, op)
 	}
 	return user, nil
 }

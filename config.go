@@ -46,6 +46,9 @@ type KafkaConfig struct {
 	User           string
 	Password       string
 	MaxPollRecords int
-	Topics         map[string]string
-	LogLevel       int
+	Topics         struct {
+		InboundEmails string
+		ChatMessages  string
+	}
+	LogLevel int
 }

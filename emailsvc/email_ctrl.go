@@ -11,6 +11,8 @@ type EmailController interface {
 	ThreadSearch(http.ResponseWriter, *http.Request, httprouter.Params)
 }
 
+var _ EmailController = (*emailController)(nil)
+
 type emailController struct {
 	service EmailService
 }

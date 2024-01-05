@@ -1,20 +1,22 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"time"
 
 	"github.com/benjamonnguyen/gootils/devlog"
 	"github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/emailsvc"
 	"github.com/benjamonnguyen/opendoorchat/kafka"
 	"github.com/benjamonnguyen/opendoorchat/mailersend"
 	"github.com/benjamonnguyen/opendoorchat/mongodb"
-	"github.com/benjamonnguyen/opendoorchat/services/emailsvc"
-	"github.com/benjamonnguyen/opendoorchat/services/emailsvc/consumer"
-	"github.com/benjamonnguyen/opendoorchat/services/usersvc"
+	"github.com/benjamonnguyen/opendoorchat/usersvc"
+	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/twmb/franz-go/pkg/kgo"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -106,14 +108,32 @@ func startEmailSvcConsumers(
 	emailService emailsvc.EmailService,
 	m emailsvc.Mailer,
 ) {
-	consumerCl := kafka.NewSplitConsumerClient(
+	cl := kafka.NewSplitConsumerClient(
 		ctx,
 		cfg.Kafka,
 		fmt.Sprintf("%s-%s", cfg.Kafka.User, "email-svc"),
 	)
-	consumer.AddInboundEmailsConsumer(ctx, cfg, emailService, m, consumerCl)
+
+	// inboundEmailsConsumer
+	if err := cl.SetRecordHandler(cfg.Kafka.Topics.InboundEmails, func(rec *kgo.Record) {
+		inbound, err := enmime.ReadEnvelope(bytes.NewReader(rec.Value))
+		if err != nil {
+			log.Error().Err(err).Send()
+			return
+		}
+		if err := emailService.ForwardInboundEmail(ctx, cfg, m, inbound); err != nil {
+			// TODO DLQ e.StatusCode()
+			log.Error().Err(err).Send()
+			return
+		}
+	}); err != nil {
+		log.Fatal().Err(err).Msg("failed AddInboundEmailsConsumer")
+	}
+	log.Info().Msg("added inboundEmails consumer")
 	shutdownManager.AddHandler(func() {
-		consumerCl.Shutdown()
+		cl.Shutdown()
 	})
-	go consumerCl.Poll(ctx)
+
+	//
+	go cl.Poll(ctx)
 }

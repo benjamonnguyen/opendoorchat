@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/services/emailsvc"
-	"github.com/benjamonnguyen/opendoorchat/services/usersvc"
+	"github.com/benjamonnguyen/opendoorchat/emailsvc"
+	"github.com/benjamonnguyen/opendoorchat/usersvc"
 	"github.com/julienschmidt/httprouter"
 	"github.com/urfave/negroni"
 )
