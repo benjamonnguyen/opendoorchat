@@ -1,0 +1,5 @@
+package app
+
+const (
+	REFRESH_TOKEN_COOKIE_KEY = "OPENDOOR_CHAT_TOKEN"
+)

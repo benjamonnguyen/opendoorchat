@@ -26,7 +26,7 @@
         <main class="container">
             <div class="grid" style="align-items: center;">
                 <article id="login-card" class="center-col">
-                    <form hx-post="/api/login" hx-target="#login-status" hx-swap="outerHTML" onsubmit="logIn(this);"
+                    <form hx-post="/auth/login" hx-target="#login-status" hx-swap="outerHTML" onsubmit="logIn(this);"
                         hx-on::after-request="enable(this);">
                         <h3>Log in</h3>
                         <input type="email" name="email" placeholder="Email" aria-label="email" autocomplete="email"

@@ -6,15 +6,15 @@ import (
 	"time"
 
 	app "github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/frontend/be"
+	"github.com/benjamonnguyen/opendoorchat/keycloak"
 	"github.com/julienschmidt/httprouter"
 )
 
 type AuthenticationController struct {
-	cl *be.Client
+	cl *keycloak.AuthClient
 }
 
-func NewAuthenticationController(cl *be.Client) *AuthenticationController {
+func NewAuthenticationController(cl *keycloak.AuthClient) *AuthenticationController {
 	return &AuthenticationController{
 		cl: cl,
 	}
@@ -31,13 +31,19 @@ func (a *AuthenticationController) LogIn(
 	p httprouter.Params,
 ) {
 	const op = "AuthenticationController.LogIn"
-
+	minTime := time.Now().Add(time.Second)
 	// authenticate
 	r.ParseForm()
-	token, err := a.cl.Authenticate(r.Context(), r.FormValue("email"), r.FormValue("password"))
+	_, refreshToken, err := a.cl.RequestAccessToken(
+		r.Context(),
+		"",
+		r.FormValue("email"),
+		r.FormValue("password"),
+	)
+	time.Sleep(time.Until(minTime)) // ensure loading animation lasts at least set duration
 	if err != nil {
 		log.Println(app.FromErr(err, op))
-		if err.StatusCode() == 401 && err.Status() != "invalid api key" {
+		if err.StatusCode() == 401 {
 			w.Write(
 				[]byte(
 					`<div id="login-status"><small id="login-status-text" style="color: #FF6161;">
@@ -51,8 +57,8 @@ func (a *AuthenticationController) LogIn(
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:    be.AccessTokenCookieKey,
-		Value:   string(token),
+		Name:    app.REFRESH_TOKEN_COOKIE_KEY,
+		Value:   refreshToken,
 		Path:    "/",
 		Expires: time.Now().Add(24 * time.Hour * 60),
 	})
@@ -81,16 +87,20 @@ func (a *AuthenticationController) SignUp(
 	p httprouter.Params,
 ) {
 	const op = "AuthenticationController.SignUp"
-
+	minTime := time.Now().Add(time.Second)
 	// create user
 	r.ParseForm()
-	user := be.User{
+	user := keycloak.UserRepresentation{
 		FirstName: r.FormValue("first-name"),
 		LastName:  r.FormValue("last-name"),
 		Email:     r.FormValue("email"),
-		Password:  r.FormValue("password"),
+		Credentials: []keycloak.CredentialRepresentation{
+			{Type: "password", Value: r.FormValue("password")},
+		},
+		Enabled: true,
+		// TODO RequiredActions verifyEmail
 	}
-	err := a.cl.CreateUser(r.Context(), user)
+	err := a.cl.RegisterUser(r.Context(), user)
 	if err != nil {
 		log.Println(app.FromErr(err, op))
 		if err.StatusCode() == http.StatusConflict {
@@ -104,11 +114,11 @@ func (a *AuthenticationController) SignUp(
 		w.Write(errHtml)
 		return
 	}
+	time.Sleep(time.Until(minTime)) // ensure loading animation lasts at least set duration
 
 	//
 	w.Write([]byte(`<div id="login-status"><small id="login-status-text">
 	You're registered! Please verify your email.</small></div>`))
-	// TODO verification email
 }
 
 func (a *AuthenticationController) LogOut(
@@ -116,14 +126,26 @@ func (a *AuthenticationController) LogOut(
 	r *http.Request,
 	p httprouter.Params,
 ) {
-	http.SetCookie(w, &http.Cookie{
-		Name:    be.AccessTokenCookieKey,
-		Value:   "",
-		Path:    "/",
-		Expires: time.UnixMilli(0),
-	})
+	const op = "AuthenticationController.LogOut"
+	// logout
+	token, _ := r.Cookie(app.REFRESH_TOKEN_COOKIE_KEY)
+	if token != nil {
+		if err := a.cl.LogOut(r.Context(), token.Value); err != nil {
+			log.Println(app.FromErr(err, op))
+		}
+
+		// expire cookie
+		http.SetCookie(w, &http.Cookie{
+			Name:    app.REFRESH_TOKEN_COOKIE_KEY,
+			Value:   "",
+			Path:    "/",
+			Expires: time.UnixMilli(0),
+		})
+	}
+
+	// redirect to login regardless of result
 	w.Header().Add("HX-Redirect", "/app/login")
-	w.WriteHeader(201)
+	w.WriteHeader(200)
 }
 
 func (a *AuthenticationController) AuthenticateToken(
@@ -131,7 +153,7 @@ func (a *AuthenticationController) AuthenticateToken(
 	r *http.Request,
 	p httprouter.Params,
 ) {
-	token, _ := r.Cookie(be.AccessTokenCookieKey)
+	token, _ := r.Cookie(app.REFRESH_TOKEN_COOKIE_KEY)
 	if token != nil {
 		// TODO AuthenticateToken impl
 		w.WriteHeader(201)

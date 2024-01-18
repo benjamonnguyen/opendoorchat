@@ -11,6 +11,8 @@ import (
 	app "github.com/benjamonnguyen/opendoorchat"
 )
 
+// TODO all users and auth stuff is handled by auth client
+
 type User struct {
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
@@ -30,7 +32,6 @@ type ChatMessage struct {
 }
 
 const (
-	AccessTokenCookieKey = "OPENDOOR_CHAT_TOKEN"
 	AccessTokenHeaderKey = "X-Access-Token"
 )
 
@@ -131,11 +132,11 @@ func (cl *Client) CreateUser(
 }
 
 func addAccessTokenHeader(req *http.Request) error {
-	token, err := req.Cookie(AccessTokenCookieKey)
-	if err != nil {
-		return err
-	}
+	// token, err := req.Cookie(AccessTokenCookieKey)
+	// if err != nil {
+	// 	return err
+	// }
 
-	req.Header.Add(AccessTokenHeaderKey, token.Value)
+	// req.Header.Add(AccessTokenHeaderKey, token.Value)
 	return nil
 }

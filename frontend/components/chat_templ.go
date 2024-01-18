@@ -304,7 +304,7 @@ func navbar() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</b></li></ul><ul><li><a hx-get=\"/api/logout\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</b></li></ul><ul><li><a hx-get=\"/auth/logout\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

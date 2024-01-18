@@ -29,7 +29,7 @@ func main() {
 	}()
 
 	// config
-	cfg, err := frontend.LoadConfig("./frontend/.env")
+	cfg, err := frontend.LoadConfig("cmd/frontend/config.yml")
 	if err != nil {
 		log.Fatal(err)
 	}

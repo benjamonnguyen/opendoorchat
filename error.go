@@ -3,13 +3,13 @@ package app
 import (
 	"bytes"
 	"fmt"
-	"net/http"
 )
 
 type Error interface {
 	error
 	StatusCode() int
 	Status() string
+	Message() string
 }
 
 type err struct {
@@ -17,22 +17,14 @@ type err struct {
 	status string
 
 	Op  string
-	Msg string
+	msg string
 	Err error
 }
 
+var _ Error = (*err)(nil)
+
 func (e *err) Error() string {
-	var buf bytes.Buffer
-	if e.Op != "" {
-		fmt.Fprint(&buf, e.Op)
-	}
-	if e.Msg != "" {
-		fmt.Fprintf(&buf, ": %s", e.Msg)
-	}
-	if e.Err != nil {
-		fmt.Fprintf(&buf, ": %s", e.Msg)
-	}
-	return buf.String()
+	return fmt.Sprintf("%s: %d %s", e.Message(), e.code, e.status)
 }
 
 func (e *err) StatusCode() int {
@@ -46,11 +38,26 @@ func (e *err) Status() string {
 	return e.status
 }
 
+func (e *err) Message() string {
+	var buf bytes.Buffer
+	if e.Op != "" {
+		fmt.Fprint(&buf, e.Op)
+	}
+	if e.msg != "" {
+		fmt.Fprintf(&buf, ": %s", e.msg)
+	}
+	if e.Err != nil {
+		fmt.Fprintf(&buf, ": %s", e.Err.Error())
+	}
+
+	return buf.String()
+}
+
 func NewErr(code int, status, msg string) *err {
 	return &err{
 		code:   code,
 		status: status,
-		Msg:    msg,
+		msg:    msg,
 	}
 }
 
@@ -59,18 +66,15 @@ func FromErr(e error, op string) *err {
 		return nil
 	}
 
-	code := http.StatusInternalServerError
-	status := ""
-	httperr, _ := e.(Error)
-	if httperr != nil {
-		code = httperr.StatusCode()
-		status = httperr.Status()
+	res := &err{Op: op}
+	err, _ := e.(Error)
+	if err != nil {
+		res.code = err.StatusCode()
+		res.status = err.Status()
+		res.msg = err.Message()
+	} else {
+		res.Err = e
 	}
 
-	return &err{
-		code:   code,
-		status: status,
-		Msg:    e.Error(),
-		Op:     op,
-	}
+	return res
 }
