@@ -1,0 +1,26 @@
+version: '2.23.3'
+
+services:
+  keycloak:
+    image: bitnami/keycloak:23.0.4
+    restart: always
+    ports:
+    - "9090:8080"
+    depends_on:
+    - postgresql
+    environment:
+      KEYCLOAK_DATABASE_NAME: bn_keycloak
+      KEYCLOAK_DATABASE_PASSWORD: password
+  postgresql:
+    image: postgres:16.1
+    restart: always
+    environment:
+      POSTGRES_USER: bn_keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+    - test_pgdata_keycloak:/var/lib/postgresql/data
+
+volumes:
+  test_pgdata_keycloak:
+
+

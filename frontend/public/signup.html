@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+        <title>SignUp • Opendoor.chat</title>
+        <script src="https://unpkg.com/htmx.org@1.9.9"
+            integrity="sha384-QFjmbokDn2DjBjq+fM+8LUIVrAgqcNW2s0PjAxHETgRn9l4fvX31ZxDxvwQnyMOX"
+            crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/htmx.org/dist/ext/head-support.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@next/css/pico.min.css" />
+        <link rel="stylesheet" href="/css/login.css" />
+    </head>
+
+    <body hx-ext="head-support">
+        <main class="container">
+            <div class="grid" style="align-items: center;">
+                <div>
+                    <section></section>
+                    <h1><kbd>Opendoor.chat</kbd></h1>
+                    <blockquote id="flavor-text">
+                        "Believe me, there’s no honor among thieves…
+                        except us of course."
+                        <footer>
+                            <cite>- Saul Goodman</cite>
+                        </footer>
+                    </blockquote>
+                </div>
+                <article id="login-card">
+                    <h3>Sign up</h3>
+                    <form hx-post="/api/signup" hx-target="#login-status" hx-swap="outerHTML"
+                        onsubmit="signUp(this, event);" hx-on::after-request="enable(this);">
+                        <div class="grid">
+                            <input type="text" name="first-name" placeholder="First Name" aria-label="first-name"
+                                maxlength="64" oninput="this.setCustomValidity('')" required />
+                            <input type="text" name="last-name" placeholder="Last Name" aria-label="last-name"
+                                maxlength="64" oninput="this.setCustomValidity('')" required />
+                        </div>
+                        <input type="email" name="email" placeholder="Email" aria-label="email" required />
+                        <input type="password" name="password" placeholder="Password" aria-label="password"
+                            oninput="this.setCustomValidity('')" minlength="8" maxlength="64" required />
+                        <input type="submit" class="contrast" value="Continue" />
+                    </form>
+                    <div class="center-col" style="width: 100%;">
+                        <div id="login-status"><small id="login-status-text"></small></div>
+                        <hr style="width: 75%;" />
+                        <small>Already have an account? <a href="/app/login">Log in</a></small>
+                    </div>
+                </article>
+            </div>
+        </main>
+
+        <script>
+            async function validateInputs(el, event) {
+                const nameRegex = /[a-zA-ZÀ-ÖØ-öø-ÿ]+/;
+                const invalidNameMsg = 'Can only contain letters.';
+                const firstName = el.querySelector('[name="first-name"]');
+                if (!nameRegex.test(firstName.value)) {
+                    firstName.setCustomValidity(invalidNameMsg);
+                    firstName.reportValidity();
+                    return false;
+                }
+                const lastName = el.querySelector('[name="last-name"]');
+                if (!nameRegex.test(lastName.value)) {
+                    lastName.setCustomValidity(invalidNameMsg);
+                    lastName.reportValidity();
+                    return false;
+                }
+
+                const pwRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[~`!@#$%^&*()_\-+={[}\]|:;"'<,>.?/]).+$/;
+                const pw = el.querySelector('[name="password"]');
+                if (!pwRegex.test(pw.value)) {
+                    pw.setCustomValidity(`Requirements:
+                            Must contain an uppercase letter: A-Z.
+                            Must contain a lowercase letter: a-z.
+                            Must contain a number: 0-9.
+                            Must contain a symbol: ~\`! @#$%^&*()_-+={[}]|\:;"'<,>.?/`);
+                    pw.reportValidity();
+                    return false;
+                }
+                return true;
+            }
+            const signUp = async (el, event) => {
+                if (!await validateInputs(el, event)) {
+                    event.preventDefault();
+                    return;
+                }
+
+                const status = document.getElementById('login-status')
+                status.setAttribute('aria-busy', true);
+                const text = document.getElementById('login-status-text')
+                text.textContent = 'Creating account...';
+                text.style = '';
+
+                el.querySelector('input[type="submit"]').setAttribute('disabled', '');
+            }
+            function enable(el) {
+                el.querySelector('input[type="submit"]').removeAttribute('disabled');
+            }
+        </script>
+    </body>
+
+</html>

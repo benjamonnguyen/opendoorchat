@@ -1,0 +1,35 @@
+#flavor-text {
+    display: none;
+}
+
+#login-card {
+    margin-bottom: 0;
+}
+
+.center-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#signup-lg {
+    display: none;
+}
+
+
+@media only screen and (min-width: 500px) {
+    #flavor-text {
+        display: block;
+    }
+
+    #signup-lg {
+        display: flex;
+        flex-direction: column;
+        margin-top: 2em;
+    }
+
+    #signup-sm {
+        display: none;
+    }
+
+}

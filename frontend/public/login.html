@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+        <title>Login • Opendoor.chat</title>
+        <script src="https://unpkg.com/htmx.org@1.9.9"
+            integrity="sha384-QFjmbokDn2DjBjq+fM+8LUIVrAgqcNW2s0PjAxHETgRn9l4fvX31ZxDxvwQnyMOX"
+            crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/htmx.org/dist/ext/head-support.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@next/css/pico.min.css" />
+        <link rel="stylesheet" href="/css/login.css" />
+    </head>
+
+    <body hx-ext="head-support">
+        <!-- TODO templ navbar component -->
+        <nav class="container">
+            <ul>
+                <li>
+                    <a class="contrast">
+                        <h2><kbd>Opendoor.chat</kbd></h2>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <main class="container">
+            <div class="grid" style="align-items: center;">
+                <article id="login-card" class="center-col">
+                    <form hx-post="/api/login" hx-target="#login-status" hx-swap="outerHTML" onsubmit="logIn(this);"
+                        hx-on::after-request="enable(this);">
+                        <h3>Log in</h3>
+                        <input type="email" name="email" placeholder="Email" aria-label="email" autocomplete="email"
+                            required />
+                        <input type="password" name="password" placeholder="Password" aria-label="password"
+                            autocomplete="current-password" required />
+                        <fieldset>
+                            <label for="remember">
+                                <input type="checkbox" role="switch" id="remember" name="remember" />
+                                Remember me
+                            </label>
+                        </fieldset>
+                        <input type="submit" class="contrast" value="Continue" />
+                    </form>
+                    <div id="login-status"><small id="login-status-text"></small></div>
+                    <div id="signup-sm" class="center-col" style="width: 100%;">
+                        <hr style="width: 75%;" />
+                        <div>
+                            <small>New to Opendoor? <a href="/app/signup">Sign up</a></small>
+                        </div>
+                    </div>
+                </article>
+                <section id="signup-lg" class="container-fluid">
+                    <hgroup>
+                        <h2>New here?</h2>
+                        <p>Welcome to the Opendoor community!</p>
+                    </hgroup>
+                    <a id="signup-btn" role="button" class="secondary" href="/app/signup">Sign up</a>
+                </section>
+            </div>
+            <script>
+                function logIn(form) {
+                    const status = document.getElementById('login-status')
+                    status.setAttribute('aria-busy', true);
+                    const text = document.getElementById('login-status-text')
+                    text.textContent = 'Logging in...';
+                    text.style = '';
+
+                    form.querySelector('input[type="submit"]').setAttribute('disabled', '');
+                }
+                function enable(form) {
+                    form.querySelector('input[type="submit"]').removeAttribute('disabled');
+                }
+            </script>
+        </main>
+    </body>
+
+</html>

@@ -3,6 +3,8 @@ module github.com/benjamonnguyen/opendoorchat
 go 1.21.4
 
 require (
+	github.com/a-h/templ v0.2.513
+	github.com/gorilla/websocket v1.5.1
 	github.com/jhillyerd/enmime v1.1.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mailersend/mailersend-go v1.5.0
@@ -23,7 +25,7 @@ require (
 	github.com/jaytaylor/html2text v0.0.0-20230321000545-74c2419ad056 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
@@ -57,7 +59,7 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/sys v0.15.0 // indirect

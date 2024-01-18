@@ -1,0 +1,42 @@
+/* html,
+body,
+main {
+  height: 100%;
+  position: fixed;
+  overflow: hidden;
+} */
+
+.is-fixed-bottom {
+  z-index: 2;
+  position: sticky;
+  bottom: 0;
+}
+
+.is-flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.is-flex-col {
+  display: flex;
+  flex-direction: row;
+}
+
+.no-focus-border:focus {
+  outline-style: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.interactive {
+  cursor: pointer;
+}
+
+.interactive:hover {
+  color: var(--pico-primary-hover);
+}
+
+.spaced-between {
+  display: flex;
+  justify-content: space-between;
+}

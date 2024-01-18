@@ -1,0 +1,144 @@
+package components
+
+templ Message(text string) {
+	<div id="chat-messages" hx-swap-oob="afterbegin"><div class="chat-message">{ text }</div></div>
+}
+
+templ NewChat() {
+	<form hx-post="/api/chat">
+		<div id="chat-header">
+			<span class="is-flex-col">
+				<label for="to">To:</label>
+				<input type="email" name="to" class="no-focus-border" required/>
+			</span>
+			<span class="is-flex-col">
+				<label for="subject">Subject:</label>
+				<input name="subject" class="no-focus-border" required/>
+			</span>
+		</div>
+		<div id="chat-messages"></div>
+		<fieldset role="group" id="sendbar">
+			<input class="is-fixed-bottom no-focus-border" name="text" placeholder="Send a message..."/>
+			<input type="submit" value="Send" tabindex="-1"/>
+		</fieldset>
+	</form>
+}
+
+templ Chat() {
+	<form ws-send x-on:htmx:ws-after-send="$dispatch('msg-sent')">
+		// TODO validate submit hx-on::ws-before-send='if (/\"chat-text\":\\"\\s*\\",/.test(event.detail.message)) event.preventDefault()'>
+		<div id="chat-header">
+			<span class="is-flex-col">
+				<label for="to">To:</label>
+				<span>placeholder@opendoor.chat</span>
+			</span>
+			<span class="is-flex-col">
+				<label for="subject">Subject:</label>
+				<span>Wedding planning</span>
+			</span>
+		</div>
+		<div id="chat-messages" hx-get="/api/chat/messages"></div>
+		<!-- TODO optimize by adding new chat and message client-side for sender -->
+		<fieldset role="group" id="sendbar">
+			<input
+ 				class="is-fixed-bottom no-focus-border"
+ 				name="text"
+ 				placeholder="Send a message..."
+ 				@msg-sent.window="$el.value=''"
+ 				required
+			/>
+			<input type="submit" value="Send" tabindex="-1"/>
+		</fieldset>
+	</form>
+}
+
+templ App() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, minimum-scale=1"/>
+			<title>App • Opendoor.chat</title>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.9" integrity="sha384-QFjmbokDn2DjBjq+fM+8LUIVrAgqcNW2s0PjAxHETgRn9l4fvX31ZxDxvwQnyMOX" crossorigin="anonymous"></script>
+			<script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+			<script src="https://unpkg.com/htmx.org/dist/ext/head-support.js"></script>
+			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@next/css/pico.min.css"/>
+			<link rel="stylesheet" href="/css/styles.css"/>
+			<link rel="stylesheet" href="/css/app.css"/>
+		</head>
+		<body hx-ext="head-support">
+			<!-- TODO early redirect. not sure if needed... -->
+			<div hx-get="/api/authenticate-token" hx-trigger="load" hx-swap="delete"></div>
+			@navbar()
+			<main id="app" hx-ext="ws" ws-connect="/ws">
+				@sidebar()
+				<div id="chat-view" hx-get="/api/chat-view" hx-trigger="load"></div>
+			</main>
+		</body>
+	</html>
+}
+
+templ sidebar() {
+	<!-- TODO sort by last event, active chat
+            profile, settings, etc at bottom -->
+	<div id="sidebar">
+		<div id="sidebar-header">
+			<span id="leads-btn" class="interactive">
+				<svg
+ 					xmlns="http://www.w3.org/2000/svg"
+ 					width="24"
+ 					height="24"
+ 					viewBox="0 0 24 24"
+ 					fill="none"
+ 					stroke="currentColor"
+ 					stroke-width="2"
+ 					stroke-linecap="round"
+ 					stroke-linejoin="round"
+ 					class="feather feather-inbox"
+				>
+					<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+					<path
+ 						d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+					></path>
+				</svg>
+			</span>
+			<span
+ 				id="new-chat-btn"
+ 				hx-get="/ui/new-chat"
+ 				hx-trigger="click"
+ 				hx-target="chat-messages"
+ 				class="interactive"
+			>
+				<svg
+ 					xmlns="http://www.w3.org/2000/svg"
+ 					width="24"
+ 					height="24"
+ 					viewBox="0 0 26 26"
+ 					fill="none"
+ 					stroke="currentColor"
+ 					stroke-width="2"
+ 					stroke-linecap="round"
+ 					stroke-linejoin="round"
+ 					class="feather feather-edit"
+				>
+					<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+					<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+				</svg>
+			</span>
+		</div>
+		<ul hx-get="/api/chats" hx-trigger="load"></ul>
+	</div>
+}
+
+templ navbar() {
+	<nav hx-boost="true" style="padding: 0 1em;">
+		<ul>
+			<li>
+				<b id="logotype">Opendoor.chat</b>
+			</li>
+		</ul>
+		<ul>
+			<li><a hx-get="/api/logout">Log out</a></li>
+		</ul>
+	</nav>
+}
