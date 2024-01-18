@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/backend"
 	"github.com/rs/zerolog/log"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/sasl/scram"
@@ -24,7 +24,7 @@ type KafkaConsumerClient interface {
 
 func NewSplitConsumerClient(
 	ctx context.Context,
-	cfg opendoorchat.KafkaConfig,
+	cfg backend.KafkaConfig,
 	groupId string,
 ) *splitConsumerClient {
 	s := &splitConsumerClient{

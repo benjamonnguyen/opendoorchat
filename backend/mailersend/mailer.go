@@ -8,8 +8,8 @@ import (
 	"net/mail"
 	"time"
 
-	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/emailsvc"
+	app "github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/backend/emailsvc"
 	"github.com/jhillyerd/enmime"
 	"github.com/mailersend/mailersend-go"
 	"github.com/rs/zerolog/log"
@@ -31,17 +31,17 @@ func NewMailer(apiKey string) mailerSendMailer {
 func (mailer mailerSendMailer) Send(
 	ctx context.Context,
 	payload enmime.Envelope,
-) (*http.Response, opendoorchat.Error) {
+) (*http.Response, app.Error) {
 	const op = "mailerSendMailer.Send"
 	from, err := mail.ParseAddress(payload.GetHeader("From"))
 	if err != nil {
-		return nil, opendoorchat.FromErr(err, fmt.Sprintf("%s: ParseAddress", op))
+		return nil, app.FromErr(err, fmt.Sprintf("%s: ParseAddress", op))
 	}
 
 	var rcpts []mailersend.Recipient
 	toAddrs, err := mail.ParseAddressList(payload.GetHeader("To"))
 	if err != nil {
-		return nil, opendoorchat.FromErr(err, fmt.Sprintf("%s: ParseAddressList", op))
+		return nil, app.FromErr(err, fmt.Sprintf("%s: ParseAddressList", op))
 	}
 	for _, addr := range toAddrs {
 		rcpts = append(rcpts, mailersend.Recipient{Name: addr.Name, Email: addr.Address})
@@ -67,7 +67,7 @@ func (mailer mailerSendMailer) Send(
 
 	resp, err := mailer.client.Email.Send(ctx, msg)
 	if err != nil {
-		e := opendoorchat.FromErr(err, fmt.Sprintf("%s: mailerSend.EmailService.Send", op))
+		e := app.FromErr(err, fmt.Sprintf("%s: mailerSend.EmailService.Send", op))
 		log.Error().Err(e).Send()
 		return nil, e
 	}
@@ -78,19 +78,19 @@ func (mailer mailerSendMailer) Send(
 func (mailer mailerSendMailer) GetEmail(
 	ctx context.Context,
 	mailerMsgId string,
-) (emailsvc.Email, opendoorchat.Error) {
+) (emailsvc.Email, app.Error) {
 	const op = "mailerSendMailer.GetEmail"
 	for i := 0; i < 3; i++ {
 		root, resp, err := mailer.client.Message.Get(ctx, mailerMsgId)
 		if err != nil {
 			log.Error().Err(err).Str("mailerMsgId", mailerMsgId).Msg("failed Message.Get")
-			return emailsvc.Email{}, opendoorchat.FromErr(
+			return emailsvc.Email{}, app.FromErr(
 				err,
 				fmt.Sprintf("%s: mailerSend.MessageService.Get", op),
 			)
 		}
 		if resp.StatusCode != 200 {
-			return emailsvc.Email{}, opendoorchat.NewErr(resp.StatusCode, resp.Status, "")
+			return emailsvc.Email{}, app.NewErr(resp.StatusCode, resp.Status, "")
 		}
 		if len(root.Data.Emails) == 0 {
 			backoff := time.Duration(math.Pow(6.0, float64(i))) * time.Second
@@ -102,5 +102,5 @@ func (mailer mailerSendMailer) GetEmail(
 			MessageId: fmt.Sprintf("<%s@mailersend.net>", root.Data.Emails[0].ID),
 		}, nil
 	}
-	return emailsvc.Email{}, opendoorchat.NewErr(404, "", "")
+	return emailsvc.Email{}, app.NewErr(404, "", "")
 }

@@ -1,4 +1,4 @@
-package opendoorchat
+package app
 
 import (
 	"bytes"

@@ -6,7 +6,8 @@ import (
 	"net/mail"
 	"time"
 
-	"github.com/benjamonnguyen/opendoorchat"
+	app "github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/backend"
 	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,18 +17,18 @@ type EmailService interface {
 	ThreadSearch(
 		ctx context.Context,
 		st ThreadSearchTerms,
-	) (EmailThread, opendoorchat.Error)
+	) (EmailThread, app.Error)
 	AddEmail(
 		ctx context.Context,
 		threadId primitive.ObjectID,
 		email Email,
-	) opendoorchat.Error
+	) app.Error
 	ForwardInboundEmail(
 		ctx context.Context,
-		cfg opendoorchat.Config,
+		cfg backend.Config,
 		m Mailer,
 		inbound *enmime.Envelope,
-	) opendoorchat.Error
+	) app.Error
 }
 
 var _ EmailService = (*emailService)(nil)
@@ -45,9 +46,9 @@ func NewEmailService(repo EmailRepo) *emailService {
 func (s *emailService) ThreadSearch(
 	ctx context.Context,
 	st ThreadSearchTerms,
-) (EmailThread, opendoorchat.Error) {
+) (EmailThread, app.Error) {
 	if st == (ThreadSearchTerms{}) {
-		return EmailThread{}, opendoorchat.NewErr(400, "missing ThreadSearchTerms", "")
+		return EmailThread{}, app.NewErr(400, "missing ThreadSearchTerms", "")
 	}
 
 	thread, err := s.repo.ThreadSearch(ctx, st)
@@ -62,12 +63,12 @@ func (s *emailService) AddEmail(
 	ctx context.Context,
 	threadId primitive.ObjectID,
 	email Email,
-) opendoorchat.Error {
+) app.Error {
 	if threadId == primitive.NilObjectID {
-		return opendoorchat.NewErr(400, "missing threadId", "")
+		return app.NewErr(400, "missing threadId", "")
 	}
 	if email == (Email{}) {
-		return opendoorchat.NewErr(400, "missing email", "")
+		return app.NewErr(400, "missing email", "")
 	}
 
 	if err := s.repo.AddEmail(ctx, threadId, email); err != nil {
@@ -80,16 +81,16 @@ func (s *emailService) AddEmail(
 // matching the "In-Reply-To" header
 func (s *emailService) ForwardInboundEmail(
 	ctx context.Context,
-	cfg opendoorchat.Config,
+	cfg backend.Config,
 	m Mailer,
 	inbound *enmime.Envelope,
-) opendoorchat.Error {
+) app.Error {
 	start := time.Now()
 	const op = "ForwardInboundEmail"
 	// devlog.Printf("got inbound email %#v\n", inbound)
 
 	if inbound == nil {
-		return opendoorchat.NewErr(400, "inbound is nil", "")
+		return app.NewErr(400, "inbound is nil", "")
 	}
 	// get thread
 	msgId := inbound.GetHeader("In-Reply-To")
@@ -100,7 +101,7 @@ func (s *emailService) ForwardInboundEmail(
 	}
 	thread, err := s.ThreadSearch(threadCtx, st)
 	if err != nil {
-		err = opendoorchat.FromErr(err, op)
+		err = app.FromErr(err, op)
 		return err
 	}
 
@@ -109,7 +110,7 @@ func (s *emailService) ForwardInboundEmail(
 	outbound.DeleteHeader("To")
 	senderAddr, e := mail.ParseAddress(outbound.GetHeader("From"))
 	if e != nil {
-		err := opendoorchat.FromErr(e, fmt.Sprintf("%s: ParseAddress", op))
+		err := app.FromErr(e, fmt.Sprintf("%s: ParseAddress", op))
 		log.Error().Err(err).Str("Header[From]", outbound.GetHeader("From")).Send()
 		return err
 	}
@@ -129,7 +130,7 @@ func (s *emailService) ForwardInboundEmail(
 	defer sendCanc()
 	mailerResp, err := m.Send(sendCtx, *outbound)
 	if err != nil {
-		err = opendoorchat.FromErr(err, op)
+		err = app.FromErr(err, op)
 		log.Error().Err(err).Send()
 		return err
 	}
@@ -144,7 +145,7 @@ func (s *emailService) ForwardInboundEmail(
 	if mailerResp.StatusCode == 202 {
 		email, err := m.GetEmail(ctx, mailerResp.Header.Get("X-Message-Id"))
 		if err != nil {
-			err = opendoorchat.FromErr(err, op)
+			err = app.FromErr(err, op)
 			log.Error().Err(err).Send()
 			return err
 		}
@@ -153,11 +154,11 @@ func (s *emailService) ForwardInboundEmail(
 		log.Debug().Str("emailMessageId", email.MessageId).Msg("AddEmail")
 		err = s.AddEmail(addCtx, thread.Id, email)
 		if err != nil {
-			err = opendoorchat.FromErr(err, op)
+			err = app.FromErr(err, op)
 			log.Error().Err(err).Send()
 			return err
 		}
 		return nil
 	}
-	return opendoorchat.NewErr(mailerResp.StatusCode, mailerResp.Status, "")
+	return app.NewErr(mailerResp.StatusCode, mailerResp.Status, "")
 }

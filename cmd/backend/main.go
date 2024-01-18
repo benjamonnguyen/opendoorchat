@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/benjamonnguyen/gootils/devlog"
-	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/emailsvc"
-	"github.com/benjamonnguyen/opendoorchat/kafka"
-	"github.com/benjamonnguyen/opendoorchat/mailersend"
-	"github.com/benjamonnguyen/opendoorchat/mongodb"
-	"github.com/benjamonnguyen/opendoorchat/usersvc"
+	"github.com/benjamonnguyen/opendoorchat/backend"
+	"github.com/benjamonnguyen/opendoorchat/backend/emailsvc"
+	"github.com/benjamonnguyen/opendoorchat/backend/kafka"
+	"github.com/benjamonnguyen/opendoorchat/backend/mailersend"
+	"github.com/benjamonnguyen/opendoorchat/backend/mongodb"
+	"github.com/benjamonnguyen/opendoorchat/backend/usersvc"
 	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -27,7 +27,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	shutdownManager := opendoorchat.GracefulShutdownManager{}
+	shutdownManager := backend.GracefulShutdownManager{}
 
 	// dependencies
 	m := mailersend.NewMailer(cfg.MailerSendApiKey)
@@ -53,8 +53,8 @@ func main() {
 	shutdownManager.ShutdownOnInterrupt(20 * time.Second)
 }
 
-func loadConfig() opendoorchat.Config {
-	cfg := opendoorchat.LoadConfig(".")
+func loadConfig() backend.Config {
+	cfg := backend.LoadConfig("./backend")
 	lvl, err := zerolog.ParseLevel(cfg.LogLevel)
 	if err != nil {
 		lvl = zerolog.InfoLevel
@@ -66,8 +66,8 @@ func loadConfig() opendoorchat.Config {
 
 func initDbClient(
 	ctx context.Context,
-	cfg opendoorchat.Config,
-	shutdownManager opendoorchat.GracefulShutdownManager,
+	cfg backend.Config,
+	shutdownManager backend.GracefulShutdownManager,
 ) *mongo.Client {
 	connCtx, connCanc := context.WithTimeout(ctx, 10*time.Second)
 	defer connCanc()
@@ -82,8 +82,8 @@ func initDbClient(
 
 func listenAndServeRoutes(
 	ctx context.Context,
-	cfg opendoorchat.Config,
-	shutdownManager opendoorchat.GracefulShutdownManager,
+	cfg backend.Config,
+	shutdownManager backend.GracefulShutdownManager,
 	emailCtrl emailsvc.EmailController,
 	userCtrl usersvc.UserController,
 ) {
@@ -103,8 +103,8 @@ func listenAndServeRoutes(
 
 func startEmailSvcConsumers(
 	ctx context.Context,
-	cfg opendoorchat.Config,
-	shutdownManager opendoorchat.GracefulShutdownManager,
+	cfg backend.Config,
+	shutdownManager backend.GracefulShutdownManager,
 	emailService emailsvc.EmailService,
 	m emailsvc.Mailer,
 ) {

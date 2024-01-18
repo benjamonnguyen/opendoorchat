@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/usersvc"
+	app "github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/backend"
+	"github.com/benjamonnguyen/opendoorchat/backend/usersvc"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,7 +20,7 @@ type mongoUserRepo struct {
 	usersCollection *mongo.Collection
 }
 
-func NewUserRepo(cfg opendoorchat.Config, cl *mongo.Client) *mongoUserRepo {
+func NewUserRepo(cfg backend.Config, cl *mongo.Client) *mongoUserRepo {
 	usersCollection := cl.Database(cfg.Mongo.Database).Collection("users")
 	if usersCollection == nil {
 		log.Fatalln("users collection does not exist")
@@ -30,10 +31,10 @@ func NewUserRepo(cfg opendoorchat.Config, cl *mongo.Client) *mongoUserRepo {
 	}
 }
 
-func (repo *mongoUserRepo) CreateUser(ctx context.Context, user usersvc.User) opendoorchat.Error {
+func (repo *mongoUserRepo) CreateUser(ctx context.Context, user usersvc.User) app.Error {
 	const op = "mongoUserRepo.CreateUser"
 	if err := user.Validate(); err != nil {
-		return opendoorchat.FromErr(err, op)
+		return app.FromErr(err, op)
 	}
 	user.Id = ""
 	user.FirstName = fixCasing(user.FirstName)
@@ -43,9 +44,9 @@ func (repo *mongoUserRepo) CreateUser(ctx context.Context, user usersvc.User) op
 	_, err := repo.usersCollection.InsertOne(ctx, user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			return opendoorchat.NewErr(409, "", "")
+			return app.NewErr(409, "", "")
 		}
-		return opendoorchat.FromErr(err, op)
+		return app.FromErr(err, op)
 	}
 	return nil
 }
@@ -53,22 +54,22 @@ func (repo *mongoUserRepo) CreateUser(ctx context.Context, user usersvc.User) op
 func (repo *mongoUserRepo) GetUser(
 	ctx context.Context,
 	id string,
-) (usersvc.User, opendoorchat.Error) {
+) (usersvc.User, app.Error) {
 	const op = "mongoUserRepo.GetUser"
 	if id == "" {
-		return usersvc.User{}, opendoorchat.NewErr(400, "required id is blank", "")
+		return usersvc.User{}, app.NewErr(400, "required id is blank", "")
 	}
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return usersvc.User{}, opendoorchat.NewErr(400, "invalid id", "")
+		return usersvc.User{}, app.NewErr(400, "invalid id", "")
 	}
 	res := repo.usersCollection.FindOne(ctx, bson.M{"_id": objectId})
 	var user usersvc.User
 	if err := res.Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return usersvc.User{}, opendoorchat.NewErr(404, "", "")
+			return usersvc.User{}, app.NewErr(404, "", "")
 		}
-		return usersvc.User{}, opendoorchat.FromErr(err, op)
+		return usersvc.User{}, app.FromErr(err, op)
 	}
 	return user, nil
 }
@@ -76,7 +77,7 @@ func (repo *mongoUserRepo) GetUser(
 func (repo *mongoUserRepo) SearchUser(
 	ctx context.Context,
 	st usersvc.UserSearchTerms,
-) (usersvc.User, opendoorchat.Error) {
+) (usersvc.User, app.Error) {
 	const op = "mongoUserRepo.SearchUser"
 	//
 	var orValues []bson.M
@@ -91,9 +92,9 @@ func (repo *mongoUserRepo) SearchUser(
 	var user usersvc.User
 	if err := res.Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return usersvc.User{}, opendoorchat.NewErr(404, "", "")
+			return usersvc.User{}, app.NewErr(404, "", "")
 		}
-		return usersvc.User{}, opendoorchat.FromErr(err, op)
+		return usersvc.User{}, app.FromErr(err, op)
 	}
 	return user, nil
 }

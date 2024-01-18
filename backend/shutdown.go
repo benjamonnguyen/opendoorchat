@@ -1,4 +1,4 @@
-package opendoorchat
+package backend
 
 import (
 	"context"

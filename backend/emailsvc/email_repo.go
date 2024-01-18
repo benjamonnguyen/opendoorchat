@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/usersvc"
+	app "github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/backend/usersvc"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type EmailRepo interface {
-	ThreadSearch(context.Context, ThreadSearchTerms) (EmailThread, opendoorchat.Error)
-	AddEmail(context.Context, primitive.ObjectID, Email) opendoorchat.Error
+	ThreadSearch(context.Context, ThreadSearchTerms) (EmailThread, app.Error)
+	AddEmail(context.Context, primitive.ObjectID, Email) app.Error
 }
 
 type Email struct {

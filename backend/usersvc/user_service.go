@@ -2,7 +2,6 @@ package usersvc
 
 import (
 	"context"
-	"crypto/sha256"
 	"net/http"
 
 	"github.com/benjamonnguyen/gootils/httputil"
@@ -77,11 +76,9 @@ func (s *userService) Authenticate(
 		return nil, httputil.NewHttpError(http.StatusUnauthorized, "", "")
 	}
 
-	// TODO generate bearer token
-	h := sha256.New()
-	if _, err := h.Write([]byte(email)); err != nil {
-		return nil, httputil.HttpErrorFromErr(err)
-	}
+	// TODO generate bearer token - for now just returning userId
+	// h := sha256.New()
+	return []byte(user.Id), nil
 
-	return h.Sum(nil), nil
+	// return h.Sum(nil), nil
 }

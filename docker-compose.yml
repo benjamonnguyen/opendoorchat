@@ -3,8 +3,11 @@ version: '2.23.3'
 services:
   opendoor-chat-services:
     image: opendoor-chat-services:latest
+    restart: always
     ports:
-      - "8080:8080"
+    - "8080:8080"
+    depends_on:
+    - keycloak
   # opendoor-chat-frontend:
   #   image: opendoor-chat-frontend:latest
   #   ports:
@@ -13,3 +16,26 @@ services:
   #   image: inboundsmtpserver:latest
   #   ports:
   #     - "25:25"
+  keycloak:
+    image: bitnami/keycloak:23.0.4
+    restart: always
+    ports:
+    - "9090:8080"
+    depends_on:
+    - postgresql
+    environment:
+      KEYCLOAK_DATABASE_NAME: bn_keycloak
+      KEYCLOAK_DATABASE_PASSWORD: password
+  postgresql:
+    image: postgres:16.1
+    restart: always
+    environment:
+      POSTGRES_USER: bn_keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+    - pgdata_keycloak:/var/lib/postgresql/data
+
+volumes:
+  pgdata_keycloak:
+
+

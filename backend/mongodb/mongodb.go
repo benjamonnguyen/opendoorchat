@@ -7,10 +7,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/backend"
 )
 
-func ConnectMongoClient(ctx context.Context, cfg opendoorchat.MongoConfig) *mongo.Client {
+func ConnectMongoClient(ctx context.Context, cfg backend.MongoConfig) *mongo.Client {
 	opts := options.Client().ApplyURI(cfg.URI).
 		SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1))
 	c, err := mongo.Connect(ctx, opts)

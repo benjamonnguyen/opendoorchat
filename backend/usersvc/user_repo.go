@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/benjamonnguyen/opendoorchat"
+	app "github.com/benjamonnguyen/opendoorchat"
 )
 
 type UserRepo interface {
-	CreateUser(context.Context, User) opendoorchat.Error
-	GetUser(ctx context.Context, id string) (User, opendoorchat.Error)
-	SearchUser(context.Context, UserSearchTerms) (User, opendoorchat.Error)
+	CreateUser(context.Context, User) app.Error
+	GetUser(ctx context.Context, id string) (User, app.Error)
+	SearchUser(context.Context, UserSearchTerms) (User, app.Error)
 }
 
 type User struct {

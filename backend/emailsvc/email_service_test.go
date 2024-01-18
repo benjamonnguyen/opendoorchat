@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/emailsvc"
-	"github.com/benjamonnguyen/opendoorchat/usersvc"
+	app "github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/backend"
+	"github.com/benjamonnguyen/opendoorchat/backend/emailsvc"
+	"github.com/benjamonnguyen/opendoorchat/backend/usersvc"
 	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/mock"
@@ -52,7 +53,7 @@ func TestForwardEmail(t *testing.T) {
 		inReplyTo = "<65457bb0435d314ea86090d1@mailersend.net>"
 		text      = "Hello, world!\r\n\r\nOn Nov 3, 2023, at 16:01, ben@domain.com wrote:\r\n> \r\n> \ufeffTest\r\n\r\n"
 	)
-	cfg := opendoorchat.Config{
+	cfg := backend.Config{
 		Domain: "domain.com",
 	}
 	record := &kgo.Record{
@@ -119,11 +120,11 @@ type emailRepo struct {
 func (s *emailRepo) ThreadSearch(
 	ctx context.Context,
 	st emailsvc.ThreadSearchTerms,
-) (emailsvc.EmailThread, opendoorchat.Error) {
+) (emailsvc.EmailThread, app.Error) {
 	args := s.Called(ctx, st)
 	err := args.Get(1)
 	if err != nil {
-		return args.Get(0).(emailsvc.EmailThread), err.(opendoorchat.Error)
+		return args.Get(0).(emailsvc.EmailThread), err.(app.Error)
 	}
 	return args.Get(0).(emailsvc.EmailThread), nil
 }
@@ -132,11 +133,11 @@ func (s *emailRepo) AddEmail(
 	ctx context.Context,
 	threadId primitive.ObjectID,
 	email emailsvc.Email,
-) opendoorchat.Error {
+) app.Error {
 	args := s.Called(ctx, threadId, email)
 	err := args.Get(0)
 	if err != nil {
-		return err.(opendoorchat.Error)
+		return err.(app.Error)
 	}
 	return nil
 }
@@ -148,12 +149,12 @@ type testMailer struct {
 func (m *testMailer) GetEmail(
 	ctx context.Context,
 	id string,
-) (emailsvc.Email, opendoorchat.Error) {
+) (emailsvc.Email, app.Error) {
 	args := m.Called(ctx, id)
 	eml := args.Get(0).(emailsvc.Email)
 	err := args.Get(1)
 	if err != nil {
-		return eml, err.(opendoorchat.Error)
+		return eml, err.(app.Error)
 	}
 	return eml, nil
 }
@@ -161,11 +162,11 @@ func (m *testMailer) GetEmail(
 func (m *testMailer) Send(
 	ctx context.Context,
 	env enmime.Envelope,
-) (*http.Response, opendoorchat.Error) {
+) (*http.Response, app.Error) {
 	args := m.Called(ctx, env)
 	err := args.Get(1)
 	if err != nil {
-		return args.Get(0).(*http.Response), err.(opendoorchat.Error)
+		return args.Get(0).(*http.Response), err.(app.Error)
 	}
 	return args.Get(0).(*http.Response), nil
 }
