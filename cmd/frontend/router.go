@@ -3,9 +3,9 @@ package main
 import (
 	"net/http"
 
-	"github.com/benjamonnguyen/opendoorchat/frontend/config"
+	"github.com/benjamonnguyen/opendoorchat/frontend"
+	"github.com/benjamonnguyen/opendoorchat/frontend/be"
 	"github.com/benjamonnguyen/opendoorchat/frontend/html"
-	"github.com/benjamonnguyen/opendoorchat/frontend/httpcl"
 	"github.com/benjamonnguyen/opendoorchat/frontend/ws"
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
@@ -14,7 +14,7 @@ import (
 )
 
 func buildServer(
-	cfg config.Config,
+	cfg frontend.Config,
 	addr string,
 	hub *ws.Hub,
 	cl *http.Client,
@@ -43,7 +43,7 @@ func buildServer(
 	// TODO /app/demo get demo data to populate UI and allow user to click around, but don't allow mutation
 
 	// backend interface
-	backendCl := httpcl.NewBackendClient(cl, cfg)
+	backendCl := be.NewClient(cl, cfg.Backend.BaseUrl)
 	authenticationCtrl := html.NewAuthenticationController(backendCl)
 	router.POST("/api/login", authenticationCtrl.LogIn)
 	router.POST("/api/signup", authenticationCtrl.SignUp)

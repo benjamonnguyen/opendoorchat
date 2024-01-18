@@ -1,0 +1,7 @@
+backend:
+  baseUrl: http://localhost:8080
+keycloak:
+  baseUrl: http://localhost:9090
+  realm: opendoor-chat
+  clientId: admin-cli
+  clientSecret: TW060L7xO0xFjjAS5RNHJTxK4WjRJhr0

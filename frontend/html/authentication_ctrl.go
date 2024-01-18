@@ -1,20 +1,20 @@
 package html
 
 import (
-	"io"
+	"log"
 	"net/http"
 	"time"
 
-	"github.com/benjamonnguyen/opendoorchat/frontend"
+	app "github.com/benjamonnguyen/opendoorchat"
+	"github.com/benjamonnguyen/opendoorchat/frontend/be"
 	"github.com/julienschmidt/httprouter"
-	"github.com/rs/zerolog/log"
 )
 
 type AuthenticationController struct {
-	cl frontend.BackendClient
+	cl *be.Client
 }
 
-func NewAuthenticationController(cl frontend.BackendClient) *AuthenticationController {
+func NewAuthenticationController(cl *be.Client) *AuthenticationController {
 	return &AuthenticationController{
 		cl: cl,
 	}
@@ -34,54 +34,45 @@ func (a *AuthenticationController) LogIn(
 
 	// authenticate
 	r.ParseForm()
-	resp, err := a.cl.Authenticate(r.Context(), r.FormValue("email"), r.FormValue("password"))
+	token, err := a.cl.Authenticate(r.Context(), r.FormValue("email"), r.FormValue("password"))
 	if err != nil {
-		log.Error().Str("op", op).Err(err).Send()
+		log.Println(app.FromErr(err, op))
+		if err.StatusCode() == 401 && err.Status() != "invalid api key" {
+			w.Write(
+				[]byte(
+					`<div id="login-status"><small id="login-status-text" style="color: #FF6161;">
+					The email and/or password you entered are not correct.</small></div>`,
+				),
+			)
+			return
+		}
 		w.Write(errHtml)
 		return
 	}
 
-	// handle response
-	if resp.StatusCode == 200 {
-		token, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Error().
-				Str("op", op).
-				Err(err).
-				Msg("failed reading repsonse body")
-			w.Write(errHtml)
-			return
-		}
-		http.SetCookie(w, &http.Cookie{
-			Name:    frontend.AccessTokenCookieKey,
-			Value:   string(token),
-			Path:    "/",
-			Expires: time.Now().Add(24 * time.Hour * 60),
-		})
-		// TODO remember login email population
-		// if vals.Get("remember") == "true" {
-		// 	http.SetCookie(w, &http.Cookie{
-		// 		Name:    "OPENDOOR_CHAT_EMAIL",
-		// 		Value:   vals.Get("email"),
-		// 		Path:    "/",
-		// 		Expires: time.Now().Add(24 * time.Hour * 365),
-		// 	})
-		// }
-		// http.SetCookie(w, &http.Cookie{
-		// 	Name:    "OPENDOOR_CHAT_REMEMBER_LOGIN",
-		// 	Value:   vals.Get("remember"),
-		// 	Path:    "/",
-		// 	Expires: time.Now().Add(24 * time.Hour * 365),
-		// })
-		w.Header().Set("HX-Redirect", "/app")
-		w.WriteHeader(201)
-	} else if resp.StatusCode == http.StatusUnauthorized && resp.Status != "invalid api key" {
-		w.Write([]byte(`<div id="login-status"><small id="login-status-text" style="color: #FF6161;">
-		The email and/or password you entered are not correct.</small></div>`))
-	} else {
-		log.Error().Str("op", op).Msg(resp.Status)
-		w.Write(errHtml)
-	}
+	http.SetCookie(w, &http.Cookie{
+		Name:    be.AccessTokenCookieKey,
+		Value:   string(token),
+		Path:    "/",
+		Expires: time.Now().Add(24 * time.Hour * 60),
+	})
+	// TODO remember login email population
+	// if vals.Get("remember") == "true" {
+	// 	http.SetCookie(w, &http.Cookie{
+	// 		Name:    "OPENDOOR_CHAT_EMAIL",
+	// 		Value:   vals.Get("email"),
+	// 		Path:    "/",
+	// 		Expires: time.Now().Add(24 * time.Hour * 365),
+	// 	})
+	// }
+	// http.SetCookie(w, &http.Cookie{
+	// 	Name:    "OPENDOOR_CHAT_REMEMBER_LOGIN",
+	// 	Value:   vals.Get("remember"),
+	// 	Path:    "/",
+	// 	Expires: time.Now().Add(24 * time.Hour * 365),
+	// })
+	w.Header().Set("HX-Redirect", "/app")
+	w.WriteHeader(201)
 }
 
 func (a *AuthenticationController) SignUp(
@@ -93,35 +84,30 @@ func (a *AuthenticationController) SignUp(
 
 	// create user
 	r.ParseForm()
-	user := frontend.User{
+	user := be.User{
 		FirstName: r.FormValue("first-name"),
 		LastName:  r.FormValue("last-name"),
 		Email:     r.FormValue("email"),
 		Password:  r.FormValue("password"),
 	}
-	resp, err := a.cl.CreateUser(r.Context(), user)
+	err := a.cl.CreateUser(r.Context(), user)
 	if err != nil {
-		log.Error().Str("op", op).Err(err).Send()
+		log.Println(app.FromErr(err, op))
+		if err.StatusCode() == http.StatusConflict {
+			w.Write(
+				[]byte(
+					`<div id="login-status"><small id="login-status-text" style="color: #FF6161;">
+					This email is already in use.</small></div>`,
+				))
+			return
+		}
 		w.Write(errHtml)
 		return
 	}
 
-	// handle response
-	var html string
-	if resp.StatusCode == 201 {
-		// TODO onboarding page
-		html = `<div id="login-status"><small id="login-status-text">
-		You're registered! Please verify your email.</small></div>`
-	} else if resp.StatusCode == http.StatusConflict {
-		html = `<div id="login-status"><small id="login-status-text" style="color: #FF6161;">
-		This email is already in use.</small></div>`
-	} else {
-		log.Error().Str("op", op).Msg(resp.Status)
-		w.Write(errHtml)
-		return
-		// TODO if problem persists, contact ???
-	}
-	w.Write([]byte(html))
+	//
+	w.Write([]byte(`<div id="login-status"><small id="login-status-text">
+	You're registered! Please verify your email.</small></div>`))
 	// TODO verification email
 }
 
@@ -131,7 +117,7 @@ func (a *AuthenticationController) LogOut(
 	p httprouter.Params,
 ) {
 	http.SetCookie(w, &http.Cookie{
-		Name:    frontend.AccessTokenCookieKey,
+		Name:    be.AccessTokenCookieKey,
 		Value:   "",
 		Path:    "/",
 		Expires: time.UnixMilli(0),
@@ -145,7 +131,7 @@ func (a *AuthenticationController) AuthenticateToken(
 	r *http.Request,
 	p httprouter.Params,
 ) {
-	token, _ := r.Cookie(frontend.AccessTokenCookieKey)
+	token, _ := r.Cookie(be.AccessTokenCookieKey)
 	if token != nil {
 		// TODO AuthenticateToken impl
 		w.WriteHeader(201)

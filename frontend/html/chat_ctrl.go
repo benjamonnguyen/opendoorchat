@@ -4,15 +4,15 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/benjamonnguyen/opendoorchat/frontend"
+	"github.com/benjamonnguyen/opendoorchat/frontend/be"
 	"github.com/julienschmidt/httprouter"
 )
 
 type ChatController struct {
-	cl frontend.BackendClient
+	cl *be.Client
 }
 
-func NewChatController(cl frontend.BackendClient) *ChatController {
+func NewChatController(cl *be.Client) *ChatController {
 	return &ChatController{
 		cl: cl,
 	}

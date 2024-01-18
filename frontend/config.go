@@ -1,15 +1,17 @@
-package config
+package frontend
 
 import (
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	BackendBaseUrl string `mapstructure:"backend_base_url"`
+	Backend struct {
+		BaseUrl string
+	}
+	Keycloak KeycloakCfg
 }
 
 func LoadConfig(file string) (Config, error) {
-	viper.AutomaticEnv()
 	viper.SetConfigFile(file)
 	if err := viper.ReadInConfig(); err != nil {
 		return Config{}, err
@@ -20,4 +22,11 @@ func LoadConfig(file string) (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+type KeycloakCfg struct {
+	BaseUrl      string
+	Realm        string
+	ClientId     string
+	ClientSecret string
 }

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/benjamonnguyen/gootils/devlog"
-	"github.com/benjamonnguyen/opendoorchat/frontend/config"
+	"github.com/benjamonnguyen/opendoorchat/frontend"
 	"github.com/benjamonnguyen/opendoorchat/frontend/ws"
 )
 
@@ -29,7 +29,7 @@ func main() {
 	}()
 
 	// config
-	cfg, err := config.LoadConfig("./frontend/.env")
+	cfg, err := frontend.LoadConfig("./frontend/.env")
 	if err != nil {
 		log.Fatal(err)
 	}
