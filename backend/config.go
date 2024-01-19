@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/benjamonnguyen/opendoorchat/keycloak"
 	"github.com/spf13/viper"
 )
 
@@ -19,12 +20,11 @@ type Config struct {
 	Kafka            KafkaConfig
 	Consumers        struct{}
 	MailerSendApiKey string
+	Keycloak         keycloak.Config
 }
 
-func LoadConfig(path string) Config {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(path)
+func LoadConfig(in string) Config {
+	viper.SetConfigFile(in)
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalln("failed reading config file:", err)
 	}

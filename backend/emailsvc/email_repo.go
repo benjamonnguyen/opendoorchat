@@ -5,7 +5,6 @@ import (
 	"time"
 
 	app "github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/backend/usersvc"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -21,7 +20,7 @@ type Email struct {
 
 type EmailThread struct {
 	Id           primitive.ObjectID `json:"id,omitempty"        bson:"_id"`
-	Participants []usersvc.User     `                           bson:"participants"`
+	Participants []app.User         `                           bson:"participants"`
 	Emails       []Email            `json:"emails,omitempty"    bson:"emails"`
 	ChatId       primitive.ObjectID `json:"chatId,omitempty"    bson:"chatId"`
 	CreatedAt    time.Time          `json:"createdAt,omitempty" bson:"createdAt"`

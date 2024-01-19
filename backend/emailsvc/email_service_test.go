@@ -10,7 +10,7 @@ import (
 	app "github.com/benjamonnguyen/opendoorchat"
 	"github.com/benjamonnguyen/opendoorchat/backend"
 	"github.com/benjamonnguyen/opendoorchat/backend/emailsvc"
-	"github.com/benjamonnguyen/opendoorchat/backend/usersvc"
+	"github.com/benjamonnguyen/opendoorchat/keycloak"
 	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/mock"
@@ -27,12 +27,12 @@ const (
 var (
 	eRepo   *emailRepo
 	tMailer *testMailer
-	sender  = usersvc.User{
+	sender  = keycloak.User{
 		FirstName: "John",
 		LastName:  "Smith",
 		Email:     fromEmail,
 	}
-	rcpt = usersvc.User{
+	rcpt = keycloak.User{
 		FirstName: "Ben",
 		LastName:  "N",
 		Email:     "ben@yahoo.com",
@@ -67,7 +67,7 @@ func TestForwardEmail(t *testing.T) {
 	// emailService.ThreadSearch expectation
 	thread := emailsvc.EmailThread{
 		Id:           primitive.NewObjectID(),
-		Participants: []usersvc.User{sender, rcpt},
+		Participants: []app.User{sender, rcpt},
 		Emails: []emailsvc.Email{
 			{
 				MessageId: inReplyTo,

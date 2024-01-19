@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"github.com/benjamonnguyen/opendoorchat/keycloak"
 	"github.com/spf13/viper"
 )
 
@@ -8,7 +9,7 @@ type Config struct {
 	Backend struct {
 		BaseUrl string
 	}
-	Keycloak KeycloakCfg
+	Keycloak keycloak.Config
 }
 
 func LoadConfig(file string) (Config, error) {
@@ -22,11 +23,4 @@ func LoadConfig(file string) (Config, error) {
 	}
 
 	return cfg, nil
-}
-
-type KeycloakCfg struct {
-	BaseUrl      string
-	Realm        string
-	ClientId     string
-	ClientSecret string
 }

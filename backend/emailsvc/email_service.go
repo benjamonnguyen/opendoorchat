@@ -116,12 +116,12 @@ func (s *emailService) ForwardInboundEmail(
 	}
 	for _, p := range thread.Participants {
 		p := p
-		if p.Email == senderAddr.Address {
+		if p.GetEmail() == senderAddr.Address {
 			outbound.SetHeader("From",
 				[]string{fmt.Sprintf("%s <%s@%s>", p.Name(), "mailer", cfg.Domain)})
 		} else {
 			outbound.AddHeader("To",
-				fmt.Sprintf("%s <%s>", p.Name(), p.Email))
+				fmt.Sprintf("%s <%s>", p.Name(), p.GetEmail()))
 		}
 	}
 

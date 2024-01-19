@@ -12,7 +12,6 @@ import (
 	"github.com/benjamonnguyen/opendoorchat/backend/kafka"
 	"github.com/benjamonnguyen/opendoorchat/backend/mailersend"
 	"github.com/benjamonnguyen/opendoorchat/backend/mongodb"
-	"github.com/benjamonnguyen/opendoorchat/backend/usersvc"
 	"github.com/jhillyerd/enmime"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -35,18 +34,15 @@ func main() {
 	// repositories
 	dbClient := initDbClient(ctx, cfg, shutdownManager)
 	emailRepo := mongodb.NewEmailRepo(cfg, dbClient)
-	userRepo := mongodb.NewUserRepo(cfg, dbClient)
 
 	// services
 	emailService := emailsvc.NewEmailService(emailRepo)
-	userService := usersvc.NewUserService(userRepo)
 
 	// controllers
 	emailCtrl := emailsvc.NewEmailController(emailService)
-	userCtrl := usersvc.NewUserController(userService)
 
 	startEmailSvcConsumers(ctx, cfg, shutdownManager, emailService, m)
-	listenAndServeRoutes(ctx, cfg, shutdownManager, emailCtrl, userCtrl)
+	listenAndServeRoutes(ctx, cfg, shutdownManager, emailCtrl)
 
 	log.Info().Msgf("started application after %s", time.Since(start).Truncate(time.Second))
 
@@ -54,7 +50,7 @@ func main() {
 }
 
 func loadConfig() backend.Config {
-	cfg := backend.LoadConfig("./backend")
+	cfg := backend.LoadConfig("cmd/backend/config.yml")
 	lvl, err := zerolog.ParseLevel(cfg.LogLevel)
 	if err != nil {
 		lvl = zerolog.InfoLevel
@@ -85,9 +81,8 @@ func listenAndServeRoutes(
 	cfg backend.Config,
 	shutdownManager backend.GracefulShutdownManager,
 	emailCtrl emailsvc.EmailController,
-	userCtrl usersvc.UserController,
 ) {
-	srv := buildServer(cfg, emailCtrl, userCtrl)
+	srv := buildServer(cfg, emailCtrl)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			log.Error().Err(err).Msg("failed srv.ListenAndServe")

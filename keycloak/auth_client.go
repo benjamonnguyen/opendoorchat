@@ -9,16 +9,15 @@ import (
 	"time"
 
 	app "github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/frontend"
 )
 
 type AuthClient struct {
 	cl           *http.Client
-	cfg          frontend.KeycloakCfg
+	cfg          Config
 	serviceToken string
 }
 
-func NewAuthClient(cl *http.Client, cfg frontend.KeycloakCfg) *AuthClient {
+func NewAuthClient(cl *http.Client, cfg Config) *AuthClient {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	tkn, _ := requestServiceToken(ctx, cl, cfg)
@@ -89,7 +88,7 @@ func (cl *AuthClient) RequestAccessToken(
 func requestAccessToken(
 	ctx context.Context,
 	cl *http.Client,
-	cfg frontend.KeycloakCfg,
+	cfg Config,
 	data url.Values,
 ) (string, string, app.Error) {
 	const (
@@ -128,7 +127,7 @@ func requestAccessToken(
 func requestServiceToken(
 	ctx context.Context,
 	cl *http.Client,
-	cfg frontend.KeycloakCfg,
+	cfg Config,
 ) (string, app.Error) {
 	data := url.Values{}
 	data.Add("client_id", cfg.ClientId)

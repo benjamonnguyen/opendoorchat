@@ -11,7 +11,6 @@ import (
 	"time"
 
 	app "github.com/benjamonnguyen/opendoorchat"
-	"github.com/benjamonnguyen/opendoorchat/frontend"
 	"github.com/benjamonnguyen/opendoorchat/httputil"
 )
 
@@ -36,11 +35,11 @@ type CredentialRepresentation struct {
 
 type keycloakUserCl struct {
 	cl           *http.Client
-	cfg          frontend.KeycloakCfg
+	cfg          Config
 	serviceToken string
 }
 
-func NewUserRepo(cl *http.Client, cfg frontend.KeycloakCfg) *keycloakUserCl {
+func NewUserRepo(cl *http.Client, cfg Config) *keycloakUserCl {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	tkn, _ := requestServiceToken(ctx, cl, cfg)
