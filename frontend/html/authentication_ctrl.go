@@ -11,12 +11,17 @@ import (
 )
 
 type AuthenticationController struct {
-	cl *keycloak.AuthClient
+	cl       *keycloak.AuthClient
+	userRepo app.UserRepo
 }
 
-func NewAuthenticationController(cl *keycloak.AuthClient) *AuthenticationController {
+func NewAuthenticationController(
+	cl *keycloak.AuthClient,
+	userRepo app.UserRepo,
+) *AuthenticationController {
 	return &AuthenticationController{
-		cl: cl,
+		cl:       cl,
+		userRepo: userRepo,
 	}
 }
 
@@ -90,7 +95,7 @@ func (a *AuthenticationController) SignUp(
 	minTime := time.Now().Add(time.Second)
 	// create user
 	r.ParseForm()
-	user := keycloak.UserRepresentation{
+	user := keycloak.User{
 		FirstName: r.FormValue("first-name"),
 		LastName:  r.FormValue("last-name"),
 		Email:     r.FormValue("email"),
@@ -100,7 +105,7 @@ func (a *AuthenticationController) SignUp(
 		Enabled: true,
 		// TODO RequiredActions verifyEmail
 	}
-	err := a.cl.RegisterUser(r.Context(), user)
+	err := a.userRepo.CreateUser(r.Context(), user)
 	if err != nil {
 		log.Println(app.FromErr(err, op))
 		if err.StatusCode() == http.StatusConflict {

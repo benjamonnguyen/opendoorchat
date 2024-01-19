@@ -28,6 +28,7 @@ services:
     depends_on:
     - postgresql
     environment:
+      # TODO remove secrets
       KEYCLOAK_DATABASE_NAME: bn_keycloak
       KEYCLOAK_DATABASE_PASSWORD: password
   postgresql:

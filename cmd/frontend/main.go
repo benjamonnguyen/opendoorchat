@@ -11,7 +11,9 @@ import (
 
 	"github.com/benjamonnguyen/gootils/devlog"
 	"github.com/benjamonnguyen/opendoorchat/frontend"
+	"github.com/benjamonnguyen/opendoorchat/frontend/html"
 	"github.com/benjamonnguyen/opendoorchat/frontend/ws"
+	"github.com/benjamonnguyen/opendoorchat/keycloak"
 )
 
 func main() {
@@ -38,11 +40,16 @@ func main() {
 	hub := ws.NewHub()
 	go hub.Run(ctx)
 
-	// server
+	// clients
 	cl := &http.Client{
 		Timeout: time.Minute,
 	}
-	srv := buildServer(cfg, *addr, hub, cl)
+	authCl := keycloak.NewAuthClient(cl, cfg.Keycloak)
+	userRepo := keycloak.NewUserRepo(cl, cfg.Keycloak)
+	authenticationCtrl := html.NewAuthenticationController(authCl, userRepo)
+
+	// server
+	srv := buildServer(cfg, *addr, hub, cl, authenticationCtrl)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			log.Println("ListenAndServe:", err)

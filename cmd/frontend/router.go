@@ -7,7 +7,6 @@ import (
 	"github.com/benjamonnguyen/opendoorchat/frontend/be"
 	"github.com/benjamonnguyen/opendoorchat/frontend/html"
 	"github.com/benjamonnguyen/opendoorchat/frontend/ws"
-	"github.com/benjamonnguyen/opendoorchat/keycloak"
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/zerolog/log"
@@ -19,6 +18,7 @@ func buildServer(
 	addr string,
 	hub *ws.Hub,
 	cl *http.Client,
+	authenticationCtrl *html.AuthenticationController,
 ) *http.Server {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -44,8 +44,6 @@ func buildServer(
 	// TODO /app/demo get demo data to populate UI and allow user to click around, but don't allow mutation
 
 	// auth endpoints
-	authCl := keycloak.NewAuthClient(cl, cfg.Keycloak)
-	authenticationCtrl := html.NewAuthenticationController(authCl)
 	router.POST("/auth/login", authenticationCtrl.LogIn)
 	router.POST("/auth/signup", authenticationCtrl.SignUp)
 	router.GET("/auth/logout", authenticationCtrl.LogOut)

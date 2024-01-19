@@ -1,7 +1,6 @@
 package keycloak
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -11,7 +10,6 @@ import (
 
 	app "github.com/benjamonnguyen/opendoorchat"
 	"github.com/benjamonnguyen/opendoorchat/frontend"
-	"github.com/benjamonnguyen/opendoorchat/httputil"
 )
 
 type AuthClient struct {
@@ -21,67 +19,15 @@ type AuthClient struct {
 }
 
 func NewAuthClient(cl *http.Client, cfg frontend.KeycloakCfg) *AuthClient {
-	self := &AuthClient{
-		cl:  cl,
-		cfg: cfg,
-	}
-	//
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	self.repopulateServiceToken(ctx)
+	tkn, _ := requestServiceToken(ctx, cl, cfg)
 	//
-	return self
-}
-
-type UserRepresentation struct {
-	Enabled         bool                       `json:"enabled,omitempty"`
-	Attributes      map[string]string          `json:"attributes,omitempty"`
-	Credentials     []CredentialRepresentation `json:"credentials,omitempty"`
-	Email           string                     `json:"email,omitempty"`
-	EmailVerified   bool                       `json:"emailVerified,omitempty"`
-	FirstName       string                     `json:"firstName,omitempty"`
-	LastName        string                     `json:"lastName,omitempty"`
-	RequiredActions []string                   `json:"requiredActions,omitempty"`
-}
-
-type CredentialRepresentation struct {
-	Type      string `json:"type,omitempty"` // password
-	Value     string `json:"value,omitempty"`
-	Temporary bool   `json:"temporary,omitempty"`
-}
-
-func (cl *AuthClient) RegisterUser(ctx context.Context, usr UserRepresentation) app.Error {
-	const (
-		op   = "authClient.RegisterUser"
-		path = "/admin/realms/opendoor-chat/users"
-	)
-
-	// build request
-	buf := &bytes.Buffer{}
-	json.NewEncoder(buf).Encode(usr)
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, cl.cfg.BaseUrl+path, buf)
-	req.Header.Add("Content-Type", "application/json")
-
-	// register user
-	_, err := httputil.DoWithRetries[interface{}](func() (any, app.Error) {
-		req.Header.Add("Authorization", "Bearer "+cl.serviceToken)
-		resp, err := cl.cl.Do(req)
-		if err != nil {
-			return nil, app.FromErr(err, op)
-		}
-		if resp.StatusCode != 201 {
-			if resp.StatusCode == 401 {
-				cl.repopulateServiceToken(ctx)
-			}
-			return nil, app.NewErr(resp.StatusCode, resp.Status, op)
-		}
-		return nil, nil
-	},
-		2,
-		func(code int) bool { return code == 401 },
-		httputil.ExponentialBackoffConfigs{},
-	)
-	return err
+	return &AuthClient{
+		cl:           cl,
+		cfg:          cfg,
+		serviceToken: tkn,
+	}
 }
 
 func (cl *AuthClient) LogOut(ctx context.Context, refreshToken string) app.Error {
@@ -137,11 +83,13 @@ func (cl *AuthClient) RequestAccessToken(
 	}
 
 	//
-	return cl.requestAccessToken(ctx, data)
+	return requestAccessToken(ctx, cl.cl, cl.cfg, data)
 }
 
-func (cl *AuthClient) requestAccessToken(
+func requestAccessToken(
 	ctx context.Context,
+	cl *http.Client,
+	cfg frontend.KeycloakCfg,
 	data url.Values,
 ) (string, string, app.Error) {
 	const (
@@ -153,7 +101,7 @@ func (cl *AuthClient) requestAccessToken(
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		cl.cfg.BaseUrl+path,
+		cfg.BaseUrl+path,
 		strings.NewReader(data.Encode()),
 	)
 	if err != nil {
@@ -162,7 +110,7 @@ func (cl *AuthClient) requestAccessToken(
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	// get tokens
-	resp, err := cl.cl.Do(req)
+	resp, err := cl.Do(req)
 	if err != nil {
 		return "", "", app.FromErr(err, op)
 	}
@@ -177,15 +125,17 @@ func (cl *AuthClient) requestAccessToken(
 	return body.AccessToken, body.RefreshToken, nil
 }
 
-func (cl *AuthClient) repopulateServiceToken(ctx context.Context) app.Error {
+func requestServiceToken(
+	ctx context.Context,
+	cl *http.Client,
+	cfg frontend.KeycloakCfg,
+) (string, app.Error) {
 	data := url.Values{}
-	data.Add("client_id", cl.cfg.ClientId)
-	data.Add("client_secret", cl.cfg.ClientSecret)
+	data.Add("client_id", cfg.ClientId)
+	data.Add("client_secret", cfg.ClientSecret)
 	data.Add("grant_type", "client_credentials")
-	token, _, err := cl.requestAccessToken(ctx, data)
-	cl.serviceToken = token
-	return err
+	token, _, err := requestAccessToken(ctx, cl, cfg, data)
+	return token, err
 }
 
-// "userinfo_endpoint":"http://localhost:9090/realms/opendoor-chat/protocol/openid-connect/userinfo",
 // "introspection_endpoint":"http://localhost:9090/realms/opendoor-chat/protocol/openid-connect/token/introspect"
