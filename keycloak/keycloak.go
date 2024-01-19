@@ -1,3 +1,4 @@
+// https://www.keycloak.org/docs-api/21.0.1/rest-api
 package keycloak
 
 type Config struct {

@@ -1,0 +1,25 @@
+host: localhost
+port: 8080
+domain: pomomo.us
+logLevel: debug
+readTimeout: 5s
+writeTimeout: 10s
+requestTimeout: 60s
+kafka:
+  logLevel: 2
+  brokers: sulky.srvs.cloudkafka.com:9094
+  maxPollRecords: 10000
+  user: wvgbkbmm
+  password: qLviUPm0dLGBf2MbIR02CHUK-PSY6yrl
+  topics:
+    inboundEmails: wvgbkbmm-inboundEmails
+    chatMessages: wvgbkbmm-chatMessages
+mongo:
+  uri: "mongodb+srv://cmpSvc:IQTfAOQay4yREDjg@cluster0.kpmhncr.mongodb.net/?retryWrites=true&w=majority"
+  database: clientManagementPlatformDB
+mailerSendApiKey: mlsn.080001561305cfc360f203d690c3cddd19de1633e115b6df4723e038fcf13d30
+keycloak:
+  baseUrl: http://localhost:9090
+  realm: opendoor-chat
+  clientId: admin-cli
+  clientSecret: TW060L7xO0xFjjAS5RNHJTxK4WjRJhr0

@@ -1,3 +1,4 @@
+// https://www.keycloak.org/docs/latest/securing_apps/
 package keycloak
 
 import (
@@ -59,6 +60,55 @@ func (cl *AuthClient) LogOut(ctx context.Context, refreshToken string) app.Error
 		return app.NewErr(resp.StatusCode, resp.Status, op)
 	}
 	return nil
+}
+
+func (cl *AuthClient) Introspect(
+	ctx context.Context,
+	accessToken string,
+) (Introspection, app.Error) {
+	const (
+		op   = "AuthClient.Introspect"
+		path = "/realms/opendoor-chat/protocol/openid-connect/token/introspect"
+	)
+
+	// build data
+	data := url.Values{}
+	data.Add("token_type_hint", "access_token")
+	data.Add("token", accessToken)
+	data.Add("client_id", cl.cfg.ClientId)
+	data.Add("client_secret", cl.cfg.ClientSecret)
+
+	// build request
+	req, _ := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		cl.cfg.BaseUrl+path,
+		strings.NewReader(data.Encode()),
+	)
+	req.Header.Add("Content-Type", "application/x-www-url-form-urlencoded")
+
+	// introspect
+	resp, err := cl.cl.Do(req)
+	if err != nil {
+		return Introspection{}, app.FromErr(err, op)
+	}
+	if resp.StatusCode != 200 {
+		return Introspection{}, app.NewErr(resp.StatusCode, resp.Status, op)
+	}
+
+	// decode
+	var res Introspection
+	json.NewDecoder(resp.Body).Decode(&res)
+	return res, nil
+}
+
+type Introspection struct {
+	// 	"scope": "email profile",
+	//   "sid": "3c9871b7-58f0-4886-9213-11ed238b0209",
+	//   "active": true
+	UserInfo
+	Scope  string `json:"scope,omitempty"`
+	Active bool   `json:"active,omitempty"`
 }
 
 // RequestAccessToken returns accessToken and optional refreshToken or else Error
@@ -136,5 +186,3 @@ func requestServiceToken(
 	token, _, err := requestAccessToken(ctx, cl, cfg, data)
 	return token, err
 }
-
-// "introspection_endpoint":"http://localhost:9090/realms/opendoor-chat/protocol/openid-connect/token/introspect"

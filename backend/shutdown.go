@@ -1,9 +1,6 @@
 package backend
 
 import (
-	"context"
-	"os"
-	"os/signal"
 	"sync"
 	"time"
 
@@ -15,15 +12,6 @@ type GracefulShutdownManager struct {
 }
 
 func (m *GracefulShutdownManager) ShutdownOnInterrupt(timeout time.Duration) {
-	ctx, cancel := context.WithCancel(context.Background())
-	interruptSignal := make(chan os.Signal, 1)
-	signal.Notify(interruptSignal, os.Interrupt)
-	go func() {
-		<-interruptSignal
-		cancel()
-	}()
-	<-ctx.Done()
-
 	start := time.Now()
 	log.Info().Msg("starting graceful shutdown")
 	errCh := make(chan error)

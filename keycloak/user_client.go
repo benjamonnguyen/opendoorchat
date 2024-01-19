@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -32,6 +31,22 @@ type CredentialRepresentation struct {
 	Value     string `json:"value,omitempty"`
 	Temporary bool   `json:"temporary,omitempty"`
 }
+
+type UserInfo struct {
+	// 	"sub": "b10c21d4-5c4c-4d19-b180-f29abc52124f",
+	// 	"email_verified": false,
+	// 	"name": "Jesse Pinkman",
+	// 	"preferred_username": "captaincook@b.b",
+	// 	"given_name": "Jesse",
+	// 	"family_name": "Pinkman",
+	// 	"email": "captaincook@b.b"
+	Email         string `json:"email,omitempty"`
+	EmailVerified bool   `json:"email_verified,omitempty"`
+	FirstName     string `json:"given_name,omitempty"`
+	LastName      string `json:"family_name,omitempty"`
+}
+
+var _ app.User = (*UserInfo)(nil)
 
 type keycloakUserCl struct {
 	cl           *http.Client
@@ -168,9 +183,61 @@ func (r *keycloakUserCl) SearchUserByEmail(
 	return res, nil
 }
 
+func (r *keycloakUserCl) Me(ctx context.Context, accessToken string) (app.User, app.Error) {
+	const (
+		op   = "keycloakUserCl.Me"
+		path = "/realms/opendoor-chat/protocol/openid-connect/userinfo"
+	)
+
+	// build request
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, r.cfg.BaseUrl+path, nil)
+	req.Header.Add("Authorization", "Bearer "+accessToken)
+
+	// handle response
+	resp, err := r.cl.Do(req)
+	if err != nil {
+		return nil, app.FromErr(err, op)
+	}
+	if resp.StatusCode != 200 {
+		return nil, app.NewErr(resp.StatusCode, resp.Status, op)
+	}
+
+	// decode
+	var usr UserInfo
+	json.NewDecoder(resp.Body).Decode(&usr)
+	return usr, nil
+}
+
+// UserInfo methods
+func (u UserInfo) GetLastName() string {
+	return u.LastName
+}
+
+func (u UserInfo) GetFirstName() string {
+	return u.FirstName
+}
+
+func (u UserInfo) GetAttributes() map[string]string {
+	return nil
+}
+func (u UserInfo) GetEmail() string {
+	return u.Email
+}
+func (u UserInfo) IsVerified() bool {
+	return u.EmailVerified
+}
+
+func (u UserInfo) Validate() error {
+	return nil
+}
+
 // User methods
-func (u User) Name() string {
-	return fmt.Sprintf("%s %s", u.FirstName, u.LastName)
+func (u User) GetLastName() string {
+	return u.LastName
+}
+
+func (u User) GetFirstName() string {
+	return u.FirstName
 }
 
 func (u User) Validate() error {
@@ -199,5 +266,3 @@ func (u User) GetEmail() string {
 func (u User) IsVerified() bool {
 	return u.EmailVerified
 }
-
-// "userinfo_endpoint":"http://localhost:9090/realms/opendoor-chat/protocol/openid-connect/userinfo",

@@ -83,10 +83,10 @@ func TestForwardEmail(t *testing.T) {
 	header := make(http.Header)
 	header.Add("X-Message-Id", mailerMsgId)
 	tMailer.On("Send", mock.Anything, mock.MatchedBy(func(outbound enmime.Envelope) bool {
-		return outbound.GetHeader("From") == fmt.Sprintf("%s <%s@%s>",
-			sender.Name(), "mailer", cfg.Domain) &&
-			outbound.GetHeader("To") == fmt.Sprintf("%s <%s>",
-				rcpt.Name(), rcpt.Email) &&
+		return outbound.GetHeader("From") == fmt.Sprintf("%s %s <%s@%s>",
+			sender.FirstName, sender.LastName, "mailer", cfg.Domain) &&
+			outbound.GetHeader("To") == fmt.Sprintf("%s %s <%s>",
+				rcpt.FirstName, rcpt.LastName, rcpt.Email) &&
 			outbound.GetHeader("Subject") == "Re: subject" &&
 			outbound.Text == text
 	})).Return(&http.Response{

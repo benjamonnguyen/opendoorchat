@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/benjamonnguyen/gootils/devlog"
@@ -24,8 +26,14 @@ func main() {
 	cfg := loadConfig()
 	devlog.Init(true, nil)
 
+	// set up graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	interruptSignal := make(chan os.Signal, 1)
+	signal.Notify(interruptSignal, os.Interrupt)
+	go func() {
+		<-interruptSignal
+		cancel()
+	}()
 	shutdownManager := backend.GracefulShutdownManager{}
 
 	// dependencies
@@ -41,11 +49,14 @@ func main() {
 	// controllers
 	emailCtrl := emailsvc.NewEmailController(emailService)
 
-	startEmailSvcConsumers(ctx, cfg, shutdownManager, emailService, m)
-	listenAndServeRoutes(ctx, cfg, shutdownManager, emailCtrl)
+	// meat and potatoes
+	go startEmailSvcConsumers(ctx, cfg, shutdownManager, emailService, m)
+	go listenAndServeRoutes(ctx, cfg, shutdownManager, emailCtrl)
 
 	log.Info().Msgf("started application after %s", time.Since(start).Truncate(time.Second))
 
+	// graceful shutdown
+	<-ctx.Done()
 	shutdownManager.ShutdownOnInterrupt(20 * time.Second)
 }
 
@@ -83,17 +94,15 @@ func listenAndServeRoutes(
 	emailCtrl emailsvc.EmailController,
 ) {
 	srv := buildServer(cfg, emailCtrl)
-	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			log.Error().Err(err).Msg("failed srv.ListenAndServe")
-		}
-	}()
 	shutdownManager.AddHandler(func() {
 		if err := srv.Shutdown(ctx); err != nil {
 			log.Error().Err(err).Msg("failed srv.Shutdown")
 		}
 	})
-	log.Info().Msgf("started http server on %s", srv.Addr)
+	log.Info().Msgf("starting http server on %s", srv.Addr)
+	if err := srv.ListenAndServe(); err != nil {
+		log.Error().Err(err).Msg("failed srv.ListenAndServe")
+	}
 }
 
 func startEmailSvcConsumers(
@@ -130,5 +139,5 @@ func startEmailSvcConsumers(
 	})
 
 	//
-	go cl.Poll(ctx)
+	cl.Poll(ctx)
 }
