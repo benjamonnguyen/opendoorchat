@@ -15,9 +15,9 @@ kafka:
     inboundEmails: wvgbkbmm-inboundEmails
     chatMessages: wvgbkbmm-chatMessages
 mongo:
-  uri: "mongodb+srv://cmpSvc:IQTfAOQay4yREDjg@cluster0.kpmhncr.mongodb.net/?retryWrites=true&w=majority"
+  uri: "mongodb+srv://cmpSvc:ZMLkI2VWVtF6b86O@cluster0.kpmhncr.mongodb.net/?retryWrites=true&w=majority"
   database: clientManagementPlatformDB
-mailerSendApiKey: mlsn.080001561305cfc360f203d690c3cddd19de1633e115b6df4723e038fcf13d30
+mailerSendApiKey: mlsn.9da5115d56723fbf3a3883f7c6bdccb89dfa382da182f28b1fe0d287f0750ee0
 keycloak:
   baseUrl: http://localhost:9090
   realm: opendoor-chat
