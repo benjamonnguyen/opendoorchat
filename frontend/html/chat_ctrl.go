@@ -28,19 +28,20 @@ func (ctrl *ChatController) CreateChat(
 	r *http.Request,
 	p httprouter.Params,
 ) {
+	// TODO TODO TODO
 	const op = "ChatController.CreateChat"
 	// get params
 	r.ParseForm()
 	var (
 		recipients []string
-		// subject    = r.FormValue("subject")
-		// text       = r.FormValue("text")
+		subject    = r.FormValue("subject")
+		text       = r.FormValue("text")
 	)
 	for _, r := range strings.Split(r.FormValue("recipients"), ",") {
 		recipients = append(recipients, r)
 	}
 
-	// authenticate endpoint should return accessToken and userId. nvm since clients can modify cookies
+	// introspect to authenticate and get user info
 
 	// create chat
 

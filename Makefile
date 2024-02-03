@@ -1,4 +1,4 @@
-unittest:
+test:
 	go test -skip IT -cover -v ./...
 
 # BACKEND
@@ -21,7 +21,7 @@ tmpl-gen:
 start-frontend: tmpl-gen
 	go run ./cmd/frontend
 
-#
+# TEST CONTAINERS
 
 start-tc:
-	docker compose -f ./test-containers.yml up
+	docker compose -f ./docker-compose-tc.yml up

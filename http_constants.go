@@ -2,4 +2,5 @@ package app
 
 const (
 	REFRESH_TOKEN_COOKIE_KEY = "OPENDOOR_CHAT_TOKEN"
+	AUTH_TOKEN_HEADER_KEY    = "X-Auth-Token"
 )
