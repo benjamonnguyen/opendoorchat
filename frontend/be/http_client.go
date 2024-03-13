@@ -2,8 +2,6 @@ package be
 
 import (
 	"net/http"
-
-	app "github.com/benjamonnguyen/opendoorchat"
 )
 
 // TODO all users and auth stuff is handled by auth client
@@ -38,9 +36,9 @@ func NewClient(cl *http.Client, baseUrl string) *Client {
 	}
 }
 
-func (cl *Client) CreateChat(chat Chat, accessToken string) app.Error {
+// func (cl *Client) CreateChat(chat Chat, accessToken string) app.Error {
 
-}
+// }
 
 func addAccessTokenHeader(req *http.Request) error {
 	// token, err := req.Cookie(AccessTokenCookieKey)

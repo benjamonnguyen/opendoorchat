@@ -23,6 +23,7 @@ go.work
 # secrets
 config.yml
 
+# others
 .vscode/
-
+.DS_Store
 .md

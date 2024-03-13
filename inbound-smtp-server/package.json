@@ -1,0 +1,12 @@
+{
+  "name": "inbound-smtp-server",
+  "description": "A Haraka SMTP Server",
+  "version": "0.0.1",
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "haraka-plugin-queue-kafka": "^1.0.0",
+    "node-fetch": "^3.3.2"
+  },
+  "repository": "",
+  "license": "MIT"
+}

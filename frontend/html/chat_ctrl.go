@@ -34,8 +34,8 @@ func (ctrl *ChatController) CreateChat(
 	r.ParseForm()
 	var (
 		recipients []string
-		subject    = r.FormValue("subject")
-		text       = r.FormValue("text")
+		// subject    = r.FormValue("subject")
+		// text       = r.FormValue("text")
 	)
 	for _, r := range strings.Split(r.FormValue("recipients"), ",") {
 		recipients = append(recipients, r)

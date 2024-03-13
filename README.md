@@ -1,12 +1,12 @@
 # Opendoor.chat
 **Client management and chat platform**
 
-## Motivation
-Create a seamless chatroom/email integration to provide a better communication experience between vendor and clients.
+## Goals
+Create a seamless chatroom interface on top of email correspondence between vendor and clients.
 
-Allow clients to continue communication via chatroom while maintaining email correspondence for recordkeeping and in cases where a client prefers to opt out.
+Provide a better tailored user experience over email threads with rich features like integrated invoicing and payments, lead acquisition, and searchable file system.
 
-Chatrooms can provide a better user experience over email threads and make searching for attachments and messages easier.
+Maintain email correspondence flow for recordkeeping and in cases where a client prefers to opt out.
 
 ## Design
 ![design](/assets/opendoor-chat-design.png)

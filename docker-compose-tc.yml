@@ -1,7 +1,40 @@
 version: '2.23.3'
 
 services:
+  backend:
+    container_name: opendoor-chat-backend
+    build:
+      context: .
+      dockerfile: ./cmd/backend/Dockerfile
+    volumes:
+    - ./cmd/backend/config.yml:/config.yml
+    restart: always
+    ports:
+    - "8080:8080"
+    depends_on:
+    - keycloak
+  frontend:
+    container_name: opendoor-chat-frontend
+    build:
+      context: .
+      dockerfile: ./cmd/frontend/Dockerfile
+    volumes:
+    - ./cmd/frontend/config.yml:/config.yml
+    restart: always
+    ports:
+    - "3000:3000"
+    depends_on:
+    - opendoor-chat-backend
+    - keycloak
+  inbound-smtp-server:
+    container_name: inbound-smtp-server
+    build:
+        context: ./inbound-smtp-server
+        dockerfile: Dockerfile
+    ports:
+      - "25:25"
   keycloak:
+    container_name: opendoor-keycloak
     image: bitnami/keycloak:23.0.4
     restart: always
     ports:
@@ -12,6 +45,7 @@ services:
       KEYCLOAK_DATABASE_NAME: bn_keycloak
       KEYCLOAK_DATABASE_PASSWORD: password
   postgresql:
+    container_name: opendoor-postgresql
     image: postgres:16.1
     restart: always
     environment:

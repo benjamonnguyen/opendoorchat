@@ -1,6 +1,6 @@
 module github.com/benjamonnguyen/opendoorchat
 
-go 1.21.4
+go 1.21.4 // upgrade to 1.22
 
 require (
 	github.com/a-h/templ v0.2.513

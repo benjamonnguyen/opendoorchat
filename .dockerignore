@@ -1,0 +1,7 @@
+docker-compose*.yml
+Makefile
+*.md
+tools.go
+inbound-smtp-server/
+docs/
+assets/

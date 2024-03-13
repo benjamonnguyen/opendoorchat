@@ -16,10 +16,12 @@ services:
     depends_on:
     - opendoor-chat-backend
     - keycloak
-  # inbound-smtp-server:
-  #   image: inboundsmtpserver:latest
-  #   ports:
-  #     - "25:25"
+  inbound-smtp-server:
+    build:
+        context: ./inbound-smtp-server
+        dockerfile: Dockerfile
+    ports:
+      - "25:25"
   keycloak:
     image: bitnami/keycloak:23.0.4
     restart: always
