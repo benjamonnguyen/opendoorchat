@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -23,7 +24,11 @@ import (
 
 func main() {
 	start := time.Now()
-	cfg := loadConfig()
+
+	// config
+	cfgFile := flag.String("cfg", "config.yml", "configuration file")
+	flag.Parse()
+	cfg := loadConfig(*cfgFile)
 	devlog.Init(true, nil)
 
 	// set up graceful shutdown
@@ -60,8 +65,8 @@ func main() {
 	shutdownManager.ShutdownOnInterrupt(20 * time.Second)
 }
 
-func loadConfig() backend.Config {
-	cfg := backend.LoadConfig("cmd/backend/config.yml")
+func loadConfig(path string) backend.Config {
+	cfg := backend.LoadConfig(path)
 	lvl, err := zerolog.ParseLevel(cfg.LogLevel)
 	if err != nil {
 		lvl = zerolog.InfoLevel

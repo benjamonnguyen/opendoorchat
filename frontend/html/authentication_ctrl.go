@@ -7,7 +7,6 @@ import (
 
 	app "github.com/benjamonnguyen/opendoorchat"
 	"github.com/benjamonnguyen/opendoorchat/keycloak"
-	"github.com/julienschmidt/httprouter"
 )
 
 type AuthenticationController struct {
@@ -30,11 +29,7 @@ var errHtml = []byte(
 Something went wrong. Please wait a moment and try again.</small></div>`,
 )
 
-func (a *AuthenticationController) LogIn(
-	w http.ResponseWriter,
-	r *http.Request,
-	p httprouter.Params,
-) {
+func (a *AuthenticationController) LogIn(w http.ResponseWriter, r *http.Request) {
 	const op = "AuthenticationController.LogIn"
 	minTime := time.Now().Add(time.Second)
 	// authenticate
@@ -86,11 +81,7 @@ func (a *AuthenticationController) LogIn(
 	w.WriteHeader(201)
 }
 
-func (a *AuthenticationController) SignUp(
-	w http.ResponseWriter,
-	r *http.Request,
-	p httprouter.Params,
-) {
+func (a *AuthenticationController) SignUp(w http.ResponseWriter, r *http.Request) {
 	const op = "AuthenticationController.SignUp"
 	minTime := time.Now().Add(time.Second)
 	// create user
@@ -126,11 +117,7 @@ func (a *AuthenticationController) SignUp(
 	You're registered! Please verify your email.</small></div>`))
 }
 
-func (a *AuthenticationController) LogOut(
-	w http.ResponseWriter,
-	r *http.Request,
-	p httprouter.Params,
-) {
+func (a *AuthenticationController) LogOut(w http.ResponseWriter, r *http.Request) {
 	const op = "AuthenticationController.LogOut"
 	// logout
 	token, _ := r.Cookie(app.REFRESH_TOKEN_COOKIE_KEY)
@@ -153,11 +140,7 @@ func (a *AuthenticationController) LogOut(
 	w.WriteHeader(200)
 }
 
-func (a *AuthenticationController) AuthenticateToken(
-	w http.ResponseWriter,
-	r *http.Request,
-	p httprouter.Params,
-) {
+func (a *AuthenticationController) AuthenticateToken(w http.ResponseWriter, r *http.Request) {
 	token, _ := r.Cookie(app.REFRESH_TOKEN_COOKIE_KEY)
 	if token != nil {
 		// TODO AuthenticateToken impl

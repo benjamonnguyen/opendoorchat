@@ -17,8 +17,13 @@ import (
 )
 
 func main() {
-	addr := flag.String("addr", "localhost:3000", "http service address")
+	// config
+	cfgFile := flag.String("cfg", "config.yml", "configuration file")
 	flag.Parse()
+	cfg, err := frontend.LoadConfig(*cfgFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 	devlog.Init(true, nil)
 
 	// graceful shutdown setup
@@ -29,12 +34,6 @@ func main() {
 		<-interruptCh
 		cancel()
 	}()
-
-	// config
-	cfg, err := frontend.LoadConfig("cmd/frontend/config.yml")
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	// ws
 	hub := ws.NewHub()
@@ -49,13 +48,13 @@ func main() {
 	authenticationCtrl := html.NewAuthenticationController(authCl, userRepo)
 
 	// server
-	srv := buildServer(cfg, *addr, hub, cl, authenticationCtrl)
+	srv := buildServer(cfg, hub, cl, authenticationCtrl)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
 			log.Println("ListenAndServe:", err)
 		}
 	}()
-	log.Println("started http server at", *addr)
+	log.Println("started http server at", srv.Addr)
 
 	<-ctx.Done()
 	// graceful shutdown

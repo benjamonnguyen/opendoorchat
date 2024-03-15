@@ -3,12 +3,10 @@ package emailsvc
 import (
 	"encoding/json"
 	"net/http"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 type EmailController interface {
-	ThreadSearch(http.ResponseWriter, *http.Request, httprouter.Params)
+	ThreadSearch(http.ResponseWriter, *http.Request)
 }
 
 var _ EmailController = (*emailController)(nil)
@@ -23,20 +21,16 @@ func NewEmailController(service EmailService) *emailController {
 	}
 }
 
-func (ctrl *emailController) ThreadSearch(
-	w http.ResponseWriter,
-	req *http.Request,
-	_ httprouter.Params,
-) {
+func (ctrl *emailController) ThreadSearch(w http.ResponseWriter, r *http.Request) {
 	// decode search terms
 	var st ThreadSearchTerms
-	if err := json.NewDecoder(req.Body).Decode(&st); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&st); err != nil {
 		http.Error(w, "provide ThreadSearchTerms", http.StatusBadRequest)
 		return
 	}
 
 	//
-	thread, httperr := ctrl.service.ThreadSearch(req.Context(), st)
+	thread, httperr := ctrl.service.ThreadSearch(r.Context(), st)
 	if httperr != nil {
 		http.Error(w, "failed ThreadSearch: "+httperr.Error(), httperr.StatusCode())
 		return

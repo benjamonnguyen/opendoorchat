@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/benjamonnguyen/opendoorchat/frontend/be"
-	"github.com/julienschmidt/httprouter"
 )
 
 type ChatController struct {
@@ -18,16 +17,12 @@ func NewChatController(cl *be.Client) *ChatController {
 	}
 }
 
-func (ctrl *ChatController) ChatView(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (ctrl *ChatController) ChatView(w http.ResponseWriter, r *http.Request) {
 	//
 	http.ServeFile(w, r, "frontend/public/new-chat.html")
 }
 
-func (ctrl *ChatController) CreateChat(
-	w http.ResponseWriter,
-	r *http.Request,
-	p httprouter.Params,
-) {
+func (ctrl *ChatController) CreateChat(w http.ResponseWriter, r *http.Request) {
 	// TODO TODO TODO
 	const op = "ChatController.CreateChat"
 	// get params

@@ -1,6 +1,6 @@
 # syntax=docker.io/docker/dockerfile:1.7-labs
 
-FROM golang:1.21.4 AS build
+FROM golang:1.22.1 AS build
 WORKDIR /app
 COPY --exclude=./cmd/backend --exclude=./backend --exclude=./cmd/static_generator . ./
 RUN go mod download

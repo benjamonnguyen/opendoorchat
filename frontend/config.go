@@ -9,6 +9,7 @@ type Config struct {
 	Backend struct {
 		BaseUrl string
 	}
+	Address  string
 	Keycloak keycloak.Config
 }
 

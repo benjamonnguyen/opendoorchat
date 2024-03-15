@@ -1,12 +1,11 @@
 module github.com/benjamonnguyen/opendoorchat
 
-go 1.21.4 // upgrade to 1.22
+go 1.22.1
 
 require (
 	github.com/a-h/templ v0.2.513
 	github.com/gorilla/websocket v1.5.1
 	github.com/jhillyerd/enmime v1.1.0
-	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mailersend/mailersend-go v1.5.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4

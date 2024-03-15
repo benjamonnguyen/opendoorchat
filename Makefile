@@ -12,14 +12,14 @@ start-backend:
 # FRONTEND 
 
 dev-frontend:
-	air -c ./.air.toml
+	air -c ./cmd/frontend/.air.toml
 
 tmpl-gen:
 	templ generate
 	go run ./cmd/static_generator
 
 start-frontend: tmpl-gen
-	go run ./cmd/frontend
+	go run ./cmd/frontend -cfg ./cmd/frontend/config.yml
 
 # TEST CONTAINERS
 
