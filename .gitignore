@@ -22,6 +22,8 @@ go.work
 
 # secrets
 config.yml
+*.conf
+*.env
 
 # others
 .vscode/

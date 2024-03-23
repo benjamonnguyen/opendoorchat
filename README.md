@@ -10,3 +10,9 @@ Maintain email correspondence flow for recordkeeping and in cases where a client
 
 ## Design
 ![design](/assets/opendoor-chat-design.png)
+
+## Deploy
+- .env
+- casbin.conf
+- mailsend API key
+- docker compose up -d

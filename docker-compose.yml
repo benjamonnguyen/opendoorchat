@@ -2,60 +2,56 @@ version: '2.23.3'
 
 services:
   backend:
-    container_name: opendoor-backend
     build:
       context: .
       dockerfile: ./cmd/backend/Dockerfile
     volumes:
     - ./cmd/backend/config.yml:/config.yml:ro
-    restart: always
+    restart: unless-stopped
     ports:
     - "8080:8080"
     depends_on:
-    - keycloak
+    - auth_server
   frontend:
-    container_name: opendoor-frontend
     build:
       context: .
       dockerfile: ./cmd/frontend/Dockerfile
     volumes:
     - ./cmd/frontend/config.yml:/config.yml:ro
     - ./frontend/public:/public:ro
-    restart: always
+    restart: unless-stopped
     ports:
     - "3000:3000"
     depends_on:
     - backend
-    - keycloak
   inbound-smtp-server:
-    container_name: inbound-smtp-server
     build:
         context: ./inbound-smtp-server
         dockerfile: Dockerfile
     ports:
       - "25:25"
-  keycloak:
-    container_name: opendoor-keycloak
-    image: bitnami/keycloak:23.0.4
+  auth_server:
     restart: always
+    image: docker.io/casbin/casdoor:latest
+    platform: linux/amd64
+    entrypoint: /bin/sh -c './server --createDatabase=true'
     ports:
-    - 9090:8080
+      - "8000:8000"
     depends_on:
-    - postgresql
+      - db
     environment:
-      KEYCLOAK_DATABASE_NAME: bn_keycloak
-      KEYCLOAK_DATABASE_PASSWORD: password
-  postgresql:
-    container_name: opendoor-postgresql
-    image: postgres:16.1
-    restart: always
-    environment:
-      POSTGRES_USER: bn_keycloak
-      POSTGRES_PASSWORD: password
+      RUNNING_IN_DOCKER: "true"
     volumes:
-    - pgdata_keycloak:/var/lib/postgresql/data
+      - ./casbin.conf:/conf/app.conf
+  db:
+    restart: always
+    image: docker.io/postgres:16.2
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS}
+    volumes:
+      - pgdata_opendoor:/var/lib/mysql
 
 volumes:
-  pgdata_keycloak:
-
-
+  pgdata_opendoor:
